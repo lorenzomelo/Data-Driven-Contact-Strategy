@@ -50,3 +50,20 @@ cross_selling_dataset = dataset4.drop(dataset4[dataset4["COMMODITY"] == "DUAL"].
 set(cross_selling_dataset["COMMODITY"])
 len(cross_selling_dataset)
 #cross_selling_dataset.to_csv("CROSS_SELLING_DATASET.csv")
+
+                                 
+#### RISK CHURN CORRELATIONS
+#drop the variables not useful for the correlation matrix
+corr_dataset = dataset3.drop(['GENRE', 'ID', 'DATE_LAST_VISIT_DESK','DATE_LAST_REQUEST_CC','FIRST_ACTIVATION_DATE','DATE_LAST_CAMPAIGN','SUPPLY_START_DATE','YEAR_BIRTH','ZONE','AREA'], axis = 1)
+#get dummies of categorical variables
+df_dummies = pd.get_dummies(corr_dataset, columns=['CONSENSUS_PRIVACY','COMMODITY','CUSTOMER_SENIORITY','PHONE_VALIDATED','BEHAVIOUR_SCORE','CLC_STATUS','ACQUISITION_CHANNEL','LAST_GAS_PRODUCT','LAST_POWER_PRODUCT', 'LAST_CAMPAIGN_TIPOLOGY'])
+#drop the other values of the variable CLC status
+riskchurn_corr_df = df_dummies.drop(['CLC_STATUS_3-Customer Loyalty','CLC_STATUS_1-New','CLC_STATUS_2-Customer','CLC_STATUS_5-Leaving'],axis=1)
+#correlation matrix
+corrmatr = riskchurn_corr_df.corr()
+#sort by correlation index to see most correlated variables
+riskchurn_corr = corrmatr['CLC_STATUS_4-Risk churn']
+riskchurn_corr_sorted = riskchurn_corr.sort_values(ascending=False)
+
+
+                                 
