@@ -28,6 +28,7 @@ dataset3["SOLUTIONS"].value_counts()
 set(dataset3["CLC_STATUS"])
 dataset3["CLC_STATUS"].value_counts()
 
+#DROPS RICK CHURNS AND LEAVING
 dataset4 = dataset3.drop(dataset3[dataset3["CLC_STATUS"] == "4-Risk churn"].index)
 dataset4 = dataset4.drop(dataset4[dataset4["CLC_STATUS"] == "5-Leaving"].index)
 dataset4["CLC_STATUS"].value_counts()
@@ -43,6 +44,8 @@ set(solution_dataset["SOLUTIONS"])
 len(solution_dataset)
 
 #solution_dataset.to_csv("SOLUTION_DATASET.csv")
+
+#DATASET CROSS_SELLING                                 
 cross_selling_dataset = dataset4.drop(dataset4[dataset4["COMMODITY"] == "DUAL"].index)
 set(cross_selling_dataset["COMMODITY"])
 len(cross_selling_dataset)
