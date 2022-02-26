@@ -28,6 +28,10 @@ dataset3["SOLUTIONS"].value_counts()
 set(dataset3["CLC_STATUS"])
 dataset3["CLC_STATUS"].value_counts()
 
+dataset4 = dataset3.drop(dataset3[dataset3["CLC_STATUS"] == "4-Risk churn"].index)
+dataset4 = dataset4.drop(dataset4[dataset4["CLC_STATUS"] == "5-Leaving"].index)
+dataset4["CLC_STATUS"].value_counts()
+
 #DATASET DIVISION
 '''
 DATASET SOLUTION
