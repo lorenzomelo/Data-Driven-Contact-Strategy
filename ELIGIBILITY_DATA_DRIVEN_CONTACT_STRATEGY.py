@@ -38,12 +38,12 @@ DATASET SOLUTION
 drop the people with already a solution --> "SOLUTIONS" == 1
 '''
 
-solution_dataset = dataset3.drop(dataset3[dataset3["SOLUTIONS"] == 1].index
+solution_dataset = dataset4.drop(dataset4[dataset4["SOLUTIONS"] == 1].index
 set(solution_dataset["SOLUTIONS"])
 len(solution_dataset)
 
 #solution_dataset.to_csv("SOLUTION_DATASET.csv")
-cross_selling_dataset = dataset3.drop(dataset3[dataset3["COMMODITY"] == "DUAL"].index)
+cross_selling_dataset = dataset4.drop(dataset4[dataset4["COMMODITY"] == "DUAL"].index)
 set(cross_selling_dataset["COMMODITY"])
 len(cross_selling_dataset)
 #cross_selling_dataset.to_csv("CROSS_SELLING_DATASET.csv")
