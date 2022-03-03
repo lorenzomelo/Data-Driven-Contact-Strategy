@@ -33,6 +33,64 @@ dataset4 = dataset3.drop(dataset3[dataset3["CLC_STATUS"] == "4-Risk churn"].inde
 dataset4 = dataset4.drop(dataset4[dataset4["CLC_STATUS"] == "5-Leaving"].index)
 dataset4["CLC_STATUS"].value_counts()
 
+
+
+
+
+### Analizziamo cosa caratterizza i "DUAL" e i "SOLUTIONS_1" guardando le medie 
+
+## Alcune variabili che torneranno utili più tardi.
+# Facciamo una distinzione tra AVG_CONSUPTION e le altre variabili per via della "scala" dei valori 
+dataset5 = dataset4.drop(['GENRE', 'ID', 'CONSENSUS_PRIVACY', 'DATE_LAST_VISIT_DESK','DATE_LAST_REQUEST_CC', 'ZONE', 'AREA', 'FIRST_ACTIVATION_DATE', 'DATE_LAST_CAMPAIGN', 'SUPPLY_START_DATE', 'EMAIL_VALIDATED', 'PHONE_VALIDATED', 'YEAR_BIRTH', "AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH"], axis = 1)
+dummy_df = pd.get_dummies(dataset5)
+
+avg_df = dataset4.filter(["AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH", "SOLUTIONS"], axis=1)
+dummy_avg_df = pd.get_dummies(avg_df)
+
+avg_df_2 = dataset4.filter(["AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH", "COMMODITY"], axis=1)
+dummy_avg_df_2 = pd.get_dummies(avg_df_2)
+dummy_avg_df_2 = dummy_avg_df_2.drop(["COMMODITY_GAS", "COMMODITY_POWER"], axis=1)
+
+
+## SOLUTIONS
+df_mean = dummy_df.groupby('SOLUTIONS').mean()
+df_mean.reset_index(drop=True, inplace=True)
+columns = list(df_mean.columns)
+df_mean = df_mean.T
+df_mean["variables"] = columns
+df_mean["difference"] = abs(df_mean[0] - df_mean[1])
+sort_df = df_mean.sort_values(by=['difference'], ascending=False)
+difference_dataset = sort_df.head(15)
+difference_dataset.plot(x="variables", y=[0, 1], kind="barh")
+
+avg_df_mean = dummy_avg_df.groupby('SOLUTIONS').mean()
+avg_df_mean.reset_index(drop=True, inplace=True)
+columns2 = list(avg_df_mean.columns)
+avg_df_mean = avg_df_mean.T
+avg_df_mean["variables"] = columns2
+avg_df_mean["difference"] = abs(avg_df_mean[0] - avg_df_mean[1])
+avg_df_mean.plot(x="variables", y=[0, 1], kind="barh")
+
+
+## DUAL
+df_mean_2 = dummy_df.groupby('COMMODITY_DUAL').mean()
+df_mean_2.reset_index(drop=True, inplace=True)
+columns = list(df_mean_2.columns)
+df_mean_2 = df_mean_2.T
+df_mean_2["variables"] = columns
+df_mean_2["difference"] = abs(df_mean_2[0] - df_mean_2[1])
+sort_df_2 = df_mean_2.sort_values(by=['difference'], ascending=False)
+difference_dataset_2 = sort_df_2.head(15)
+difference_dataset_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"])
+
+avg_df_mean_2 = dummy_avg_df_2.groupby('COMMODITY_DUAL').mean()
+avg_df_mean_2.reset_index(drop=True, inplace=True)
+columns2 = list(avg_df_mean_2.columns)
+avg_df_mean_2 = avg_df_mean_2.T
+avg_df_mean_2["variables"] = columns2
+avg_df_mean_2["difference"] = abs(avg_df_mean_2[0] - avg_df_mean_2[1])
+avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"])
+
 #DATASET DIVISION
 '''
 DATASET SOLUTION
