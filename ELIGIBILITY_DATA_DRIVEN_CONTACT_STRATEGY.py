@@ -40,7 +40,7 @@ DATASET SOLUTION
 drop the people with already a solution --> "SOLUTIONS" == 1
 '''
 
-solution_dataset = dataset4.drop(dataset4[dataset4["SOLUTIONS"] == 1].index
+solution_dataset = dataset4.drop(dataset4[dataset4["SOLUTIONS"] == 1].index)
 set(solution_dataset["SOLUTIONS"])
 len(solution_dataset)
 
