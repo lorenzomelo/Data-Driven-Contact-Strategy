@@ -160,3 +160,104 @@ avg_df_mean_2 = avg_df_mean_2.T
 avg_df_mean_2["variables"] = columns2
 avg_df_mean_2["difference"] = abs(avg_df_mean_2[0] - avg_df_mean_2[1])
 avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"])
+
+#CLUSTER SOLUTIONS
+
+import pandas as pd
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+dataset_solution = pd.read_csv("project_deloitte/Logistic_solutions.csv")
+
+del dataset_solution["Unnamed: 0"]
+
+dataset_cluster = dataset_solution[["INBOUND_CONTACTS_LAST_YEAR", "N_TLS_CROSS_SELLING",
+                                    "CLC_STATUS_3-Customer Loyalty", "N_SMS_CROSS_SELLING",
+                                    "N_SMS_CARING", "LAST_POWER_PRODUCT_Tradizionale",
+                                    "WEB_PORTAL_REGISTRATION", "LAST_CAMPAIGN_TIPOLOGY_Communication",
+                                    "N_TLS_CARING", "LAST_POWER_PRODUCT_Green", "INBOUND_CONTACTS_LAST_2MONTHS",
+                                    "N_SMS_SOLUTION"]]
+X = dataset_cluster
+
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', random_state=42)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+plt.plot(range(1, 11), wcss)
+plt.title('The Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+plt.show()
+
+kmeans = KMeans(n_clusters=2, init='k-means++', random_state=42)
+y_kmeans = kmeans.fit_predict(X)
+dataset_kmeans = y_kmeans
+dataframe_kmeans = pd.DataFrame(dataset_kmeans, columns=['cluster_solution_2'])
+#print(dataframe_kmeans.head()
+
+kmeans2 = KMeans(n_clusters=8, init='k-means++', random_state=42)
+y_kmeans2 = kmeans2.fit_predict(X)
+dataset_kmeans2 = y_kmeans2 
+dataframe_kmeans2 = pd.DataFrame(dataset_kmeans2, columns=['cluster_solution_8'])
+
+
+dataset_solution = pd.concat([dataset_solution.reset_index(drop=True),dataframe_kmeans.reset_index(drop = True)], axis=1)
+dataset_solution = pd.concat([dataset_solution.reset_index(drop=True),dataframe_kmeans2.reset_index(drop = True)], axis=1)
+
+#dataset_solution["SOLUTIONS"].value_counts()
+
+df_cluster_2 = dataset_solution.groupby(["SOLUTIONS", "cluster_solution_2"])["cluster_solution_2"].count()
+print(df_cluster_2.head())
+
+df_cluster_8 = dataset_solution.groupby(["SOLUTIONS", "cluster_solution_8"])["cluster_solution_8"].count()
+print(df_cluster_8.head())
+
+#CLUSTER COMMODITY
+import pandas as pd
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+dataset_solution = pd.read_csv("project_deloitte/Logistic_commodity.csv")
+
+del dataset_solution["Unnamed: 0"]
+
+dataset_cluster = dataset_solution[["CLC_STATUS_3-Customer Loyalty","N_TLS_CROSS_SELLING",
+                                    "LAST_CAMPAIGN_TIPOLOGY_Cross-Selling", "N_DEM_CARING",
+                                    "LAST_POWER_PRODUCT_Green", "WEB_PORTAL_REGISTRATION", "CUSTOMER_SENIORITY_>3 YEARS",
+                                    "LAST_CAMPAIGN_TIPOLOGY_Caring"]]
+X = dataset_cluster
+
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', random_state=42)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+plt.plot(range(1, 11), wcss)
+plt.title('The Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+plt.show()
+
+kmeans = KMeans(n_clusters=2, init='k-means++', random_state=42)
+y_kmeans = kmeans.fit_predict(X)
+dataset_kmeans = y_kmeans
+dataframe_kmeans = pd.DataFrame(dataset_kmeans, columns=['cluster_commodity_2'])
+#print(dataframe_kmeans.head()
+
+kmeans2 = KMeans(n_clusters=4, init='k-means++', random_state=42)
+y_kmeans2 = kmeans2.fit_predict(X)
+dataset_kmeans2 = y_kmeans2
+dataframe_kmeans2 = pd.DataFrame(dataset_kmeans2, columns=['cluster_commodity_4'])
+
+
+dataset_solution = pd.concat([dataset_solution.reset_index(drop=True),dataframe_kmeans.reset_index(drop = True)], axis=1)
+dataset_solution = pd.concat([dataset_solution.reset_index(drop=True),dataframe_kmeans2.reset_index(drop = True)], axis=1)
+
+#dataset_solution["COMMODITY_DUAL"].value_counts()
+
+df_commodity_2 = dataset_solution.groupby(["COMMODITY_DUAL", "cluster_commodity_2"])["cluster_solution_2"].count()
+#print(prova.head())
+
+df_commodity_4 = dataset_solution.groupby(["COMMODITY_DUAL", "cluster_commodity_4"])["cluster_solution_4"].count()
+#print(prova2.head())
