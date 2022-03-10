@@ -197,3 +197,120 @@ avg_df_mean_2 = avg_df_mean_2.T
 avg_df_mean_2["variables"] = columns2
 avg_df_mean_2["difference"] = abs(avg_df_mean_2[0] - avg_df_mean_2[1])
 avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"])
+
+
+####### RANDOM FOREST ######
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.inspection import permutation_importance
+
+rf_final = RandomForestClassifier(n_estimators=100,max_depth=5,random_state=0)
+X = dummy_df.iloc[:, dummy_df.columns != "SOLUTIONS"].values
+y = dummy_df["SOLUTIONS"]
+model_rf = rf_final.fit(X, y)
+
+# Feature importances
+rf_final.feature_importances_
+sorted_idx = rf_final.feature_importances_.argsort()
+yaxis = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', 'NEW_CUSTOMER',
+       'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER',
+       'LAST_MONTH_DESK_VISITS', 'LAST_3MONTHS_DESK_VISITS',
+       'LAST_YEAR_DESK_VISITS', 'LAST_MONTH_CC_REQUESTS',
+       'LAST_3MONTHS_CC_REQUESTS', 'LAST_YEAR_CC_REQUESTS', 'N_GAS_POINTS',
+       'N_POWER_POINTS', 'N_DISUSED_GAS_POINTS', 'N_DISUSED_POWER_POINTS',
+       'N_TERMINATED_GAS_PER_SWITCH', 'N_TERMINATED_POWER_PER_SWITCH',
+       'N_TERMINATED_GAS_PER_VOLTURA', 'N_TERMINATED_POWER_PER_VOLTURA',
+       'INBOUND_CONTACTS_LAST_MONTH', 'INBOUND_CONTACTS_LAST_2MONTHS',
+       'INBOUND_CONTACTS_LAST_YEAR', 'N_RISK_CASES_CHURN_GAS',
+       'N_RISK_CASES_CHURN_POWER', 'N_MISSED_PAYMENTS', 'N_SWITCH_ANTI_CHURN',
+       'N_CAMPAIGN_SENT', 'N_CAMPAIGN_CLICKED', 'N_CAMPAIGN_OPENED',
+       'N_DEM_CARING', 'N_SMS_CARING', 'N_TLS_CARING', 'N_DEM_RENEWAL',
+       'N_SMS_RENEWAL', 'N_TLS_RENEWAL', 'N_DEM_CROSS_SELLING',
+       'N_SMS_CROSS_SELLING', 'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
+       'N_SMS_SOLUTION', 'N_TLS_SOLUTION', 'GENRE_F', 'GENRE_M',
+       'COMMODITY_DUAL', 'COMMODITY_GAS', 'COMMODITY_POWER', 'ZONE_Abruzzo',
+       'ZONE_Basilicata', 'ZONE_Calabria', 'ZONE_Campania',
+       'ZONE_Emilia-Romagna', 'ZONE_Friuli-Venezia Giulia', 'ZONE_Lazio',
+       'ZONE_Liguria', 'ZONE_Lombardia', 'ZONE_Marche', 'ZONE_Molise',
+       'ZONE_Piemonte', 'ZONE_Puglia', 'ZONE_Sardegna', 'ZONE_Sicilia',
+       'ZONE_Toscana', 'ZONE_Trentino-Alto Adige', 'ZONE_Umbria',
+       "ZONE_Valle d'Aosta/VallÃ©e d'Aoste", 'ZONE_Veneto', 'AREA_Center',
+       'AREA_North-East', 'AREA_North-West', 'AREA_South',
+       'CUSTOMER_SENIORITY_1-3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+       'CUSTOMER_SENIORITY_>3 YEARS', 'BEHAVIOUR_SCORE_BAD PAYER',
+       'BEHAVIOUR_SCORE_GOOD PAYER', 'BEHAVIOUR_SCORE_LATECOMER',
+       'CLC_STATUS_1-New', 'CLC_STATUS_2-Customer',
+       'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
+       'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
+       'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
+       'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelity ',
+       'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
+       'LAST_POWER_PRODUCT_Digital', 'LAST_POWER_PRODUCT_FedeltÃ',
+       'LAST_POWER_PRODUCT_Fidelity', 'LAST_POWER_PRODUCT_Green',
+       'LAST_POWER_PRODUCT_Tradizionale', 'LAST_CAMPAIGN_TIPOLOGY_Caring',
+       'LAST_CAMPAIGN_TIPOLOGY_Communication',
+       'LAST_CAMPAIGN_TIPOLOGY_Comunicazione',
+       'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+       'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
+       'LAST_CAMPAIGN_TIPOLOGY_Solution'])
+sns.barplot(x=rf_final.feature_importances_[sorted_idx], y=yaxis.columns[sorted_idx], orient="h", palette="gist_rainbow")
+plt.xlabel("Random Forest Feature Importance")
+plt.title("Random Forest Features Importance", fontweight="bold", fontsize = 12)
+sns.set(font_scale = 0.3)
+plt.show()
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.inspection import permutation_importance
+
+rf_final_commodity = RandomForestClassifier(n_estimators=100,max_depth=5,random_state=0)
+X1 = dummy_df.drop(['COMMODITY_DUAL', 'COMMODITY_POWER', 'COMMODITY_GAS'], axis=1)
+y1 = dummy_df["COMMODITY_DUAL"]
+model_rf_commodity = rf_final_commodity.fit(X1, y1)
+
+# Feature importances
+rf_final_commodity.feature_importances_
+sorted_idx = rf_final.feature_importances_.argsort()
+yaxis = pd.DataFrame(X1, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER',
+       'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER',
+       'LAST_MONTH_DESK_VISITS', 'LAST_3MONTHS_DESK_VISITS',
+       'LAST_YEAR_DESK_VISITS', 'LAST_MONTH_CC_REQUESTS',
+       'LAST_3MONTHS_CC_REQUESTS', 'LAST_YEAR_CC_REQUESTS', 'N_GAS_POINTS',
+       'N_POWER_POINTS', 'N_DISUSED_GAS_POINTS', 'N_DISUSED_POWER_POINTS',
+       'N_TERMINATED_GAS_PER_SWITCH', 'N_TERMINATED_POWER_PER_SWITCH',
+       'N_TERMINATED_GAS_PER_VOLTURA', 'N_TERMINATED_POWER_PER_VOLTURA',
+       'INBOUND_CONTACTS_LAST_MONTH', 'INBOUND_CONTACTS_LAST_2MONTHS',
+       'INBOUND_CONTACTS_LAST_YEAR', 'N_RISK_CASES_CHURN_GAS',
+       'N_RISK_CASES_CHURN_POWER', 'N_MISSED_PAYMENTS', 'N_SWITCH_ANTI_CHURN',
+       'N_CAMPAIGN_SENT', 'N_CAMPAIGN_CLICKED', 'N_CAMPAIGN_OPENED',
+       'N_DEM_CARING', 'N_SMS_CARING', 'N_TLS_CARING', 'N_DEM_RENEWAL',
+       'N_SMS_RENEWAL', 'N_TLS_RENEWAL', 'N_DEM_CROSS_SELLING',
+       'N_SMS_CROSS_SELLING', 'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
+       'N_SMS_SOLUTION', 'N_TLS_SOLUTION', 'GENRE_F', 'GENRE_M', 'ZONE_Abruzzo',
+       'ZONE_Basilicata', 'ZONE_Calabria', 'ZONE_Campania',
+       'ZONE_Emilia-Romagna', 'ZONE_Friuli-Venezia Giulia', 'ZONE_Lazio',
+       'ZONE_Liguria', 'ZONE_Lombardia', 'ZONE_Marche', 'ZONE_Molise',
+       'ZONE_Piemonte', 'ZONE_Puglia', 'ZONE_Sardegna', 'ZONE_Sicilia',
+       'ZONE_Toscana', 'ZONE_Trentino-Alto Adige', 'ZONE_Umbria',
+       "ZONE_Valle d'Aosta/VallÃ©e d'Aoste", 'ZONE_Veneto', 'AREA_Center',
+       'AREA_North-East', 'AREA_North-West', 'AREA_South',
+       'CUSTOMER_SENIORITY_1-3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+       'CUSTOMER_SENIORITY_>3 YEARS', 'BEHAVIOUR_SCORE_BAD PAYER',
+       'BEHAVIOUR_SCORE_GOOD PAYER', 'BEHAVIOUR_SCORE_LATECOMER',
+       'CLC_STATUS_1-New', 'CLC_STATUS_2-Customer',
+       'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
+       'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
+       'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
+       'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelity ',
+       'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
+       'LAST_POWER_PRODUCT_Digital', 'LAST_POWER_PRODUCT_FedeltÃ',
+       'LAST_POWER_PRODUCT_Fidelity', 'LAST_POWER_PRODUCT_Green',
+       'LAST_POWER_PRODUCT_Tradizionale', 'LAST_CAMPAIGN_TIPOLOGY_Caring',
+       'LAST_CAMPAIGN_TIPOLOGY_Communication',
+       'LAST_CAMPAIGN_TIPOLOGY_Comunicazione',
+       'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+       'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
+       'LAST_CAMPAIGN_TIPOLOGY_Solution'])
+sns.barplot(x=rf_final_commodity.feature_importances_[sorted_idx], y=yaxis.columns[sorted_idx], orient="h", palette="gist_rainbow")
+plt.xlabel("Random Forest Feature Importance")
+plt.title("Random Forest Features Importance", fontweight="bold", fontsize = 12)
+sns.set(font_scale = 0.3)
+plt.show()
