@@ -28,6 +28,31 @@ dataset3["SOLUTIONS"].value_counts()
 set(dataset3["CLC_STATUS"])
 dataset3["CLC_STATUS"].value_counts()
 
+
+
+### DIVIDING DATASET ACCORDING TO THE ELIGIBILITY
+pd.options.mode.chained_assignment = None
+timefmt = "%d/%m/%Y"
+dataset3['DATE_LAST_CAMPAIGN'] = pd.to_datetime(dataset3['DATE_LAST_CAMPAIGN'], format = timefmt)
+
+datatypes = dataset3.dtypes
+
+dataset3['REFERENCE_DATE'] = "22/03/2022"
+dataset3['REFERENCE_DATE'] = pd.to_datetime(dataset3['REFERENCE_DATE'], format = timefmt)
+
+dataset3['N_months'] = ((dataset3.DATE_LAST_CAMPAIGN - dataset3.REFERENCE_DATE)/np.timedelta64(1, 'M'))
+dataset3['N_months'] = dataset3['N_months'].astype(int).abs()
+
+cross_selling_tls = dataset3[dataset3.N_months >= 6]
+cross_selling_dem = dataset3[dataset3.N_months >= 2]
+cross_selling_sms = dataset3[dataset3.N_months >= 2]
+solution_tls = dataset3[dataset3.N_months >= 12]
+solution_dem = dataset3[dataset3.N_months >= 6]
+solution_sms = dataset3[dataset3.N_months >= 6]
+
+
+
+
 #DROPS RICK CHURNS AND LEAVING
 dataset4 = dataset.drop(dataset[dataset["CLC_STATUS"] == "4-Risk churn"].index)
 dataset4 = dataset4.drop(dataset4[dataset4["CLC_STATUS"] == "5-Leaving"].index)
