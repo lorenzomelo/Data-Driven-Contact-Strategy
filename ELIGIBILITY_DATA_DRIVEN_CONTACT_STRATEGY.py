@@ -185,3 +185,15 @@ avg_df_mean_2 = avg_df_mean_2.T
 avg_df_mean_2["variables"] = columns2
 avg_df_mean_2["difference"] = abs(avg_df_mean_2[0] - avg_df_mean_2[1])
 avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"])
+
+
+#Creating datasets for the logistic regression and the random forest
+rf1 = dummy_df.filter(difference_dataset["variables"].tolist(), axis=1)
+rf2 = dummy_df.filter(difference_dataset_2["variables"].tolist(), axis=1)
+rf1['SOLUTIONS'] = dummy_df['SOLUTIONS']
+rf2['COMMODITY_DUAL'] = dummy_df['COMMODITY_DUAL']
+
+rf1.to_csv('dataset_log_rf1.csv')
+rf2.to_csv('dataset_log_rf2.csv')
+
+
