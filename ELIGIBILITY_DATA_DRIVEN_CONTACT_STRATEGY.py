@@ -201,7 +201,6 @@ avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"
 
 ####### RANDOM FOREST ######
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.inspection import permutation_importance
 
 rf_final = RandomForestClassifier(n_estimators=100,max_depth=5,random_state=0)
 X = dummy_df.iloc[:, dummy_df.columns != "SOLUTIONS"].values
@@ -211,7 +210,7 @@ model_rf = rf_final.fit(X, y)
 # Feature importances
 rf_final.feature_importances_
 sorted_idx = rf_final.feature_importances_.argsort()
-yaxis = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', 'NEW_CUSTOMER',
+yaxis = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', "SOLUTIONS" 'NEW_CUSTOMER',
        'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER',
        'LAST_MONTH_DESK_VISITS', 'LAST_3MONTHS_DESK_VISITS',
        'LAST_YEAR_DESK_VISITS', 'LAST_MONTH_CC_REQUESTS',
@@ -242,7 +241,7 @@ yaxis = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', 'NEW_CUSTOMER',
        'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
        'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
        'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
-       'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelity ',
+       'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelity ',
        'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
        'LAST_POWER_PRODUCT_Digital', 'LAST_POWER_PRODUCT_FedeltÃ',
        'LAST_POWER_PRODUCT_Fidelity', 'LAST_POWER_PRODUCT_Green',
@@ -252,24 +251,28 @@ yaxis = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', 'NEW_CUSTOMER',
        'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
        'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
        'LAST_CAMPAIGN_TIPOLOGY_Solution'])
+
+plt.figure(figsize=(10,10))
 sns.barplot(x=rf_final.feature_importances_[sorted_idx], y=yaxis.columns[sorted_idx], orient="h", palette="gist_rainbow")
 plt.xlabel("Random Forest Feature Importance")
-plt.title("Random Forest Features Importance", fontweight="bold", fontsize = 12)
-sns.set(font_scale = 0.3)
+plt.title("Random Forest Features Importance, SOLUTIONS", fontweight="bold", fontsize = 12)
+sns.set(font_scale = 0.2)
+plt.rcParams['figure.dpi'] = 300
+#plt.rcParams['savefig.dpi'] = 300
 plt.show()
 
+
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.inspection import permutation_importance
 
 rf_final_commodity = RandomForestClassifier(n_estimators=100,max_depth=5,random_state=0)
-X1 = dummy_df.drop(['COMMODITY_DUAL', 'COMMODITY_POWER', 'COMMODITY_GAS'], axis=1)
+X_dataframe = dummy_df.drop(['COMMODITY_DUAL', 'COMMODITY_POWER', 'COMMODITY_GAS'], axis=1)
+X1 = X_dataframe.to_numpy()
 y1 = dummy_df["COMMODITY_DUAL"]
 model_rf_commodity = rf_final_commodity.fit(X1, y1)
-
 # Feature importances
 rf_final_commodity.feature_importances_
-sorted_idx = rf_final.feature_importances_.argsort()
-yaxis = pd.DataFrame(X1, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER',
+sorted_idx = rf_final_commodity.feature_importances_.argsort()
+yaxis1 = pd.DataFrame(X1, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER',
        'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER',
        'LAST_MONTH_DESK_VISITS', 'LAST_3MONTHS_DESK_VISITS',
        'LAST_YEAR_DESK_VISITS', 'LAST_MONTH_CC_REQUESTS',
@@ -299,7 +302,7 @@ yaxis = pd.DataFrame(X1, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER'
        'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
        'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
        'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
-       'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelity ',
+       'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelity ',
        'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
        'LAST_POWER_PRODUCT_Digital', 'LAST_POWER_PRODUCT_FedeltÃ',
        'LAST_POWER_PRODUCT_Fidelity', 'LAST_POWER_PRODUCT_Green',
@@ -309,8 +312,11 @@ yaxis = pd.DataFrame(X1, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER'
        'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
        'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
        'LAST_CAMPAIGN_TIPOLOGY_Solution'])
-sns.barplot(x=rf_final_commodity.feature_importances_[sorted_idx], y=yaxis.columns[sorted_idx], orient="h", palette="gist_rainbow")
+
+plt.figure(figsize=(10,10))
+sns.barplot(x=rf_final_commodity.feature_importances_[sorted_idx], y=yaxis1.columns[sorted_idx], orient="h", palette="gist_rainbow")
 plt.xlabel("Random Forest Feature Importance")
-plt.title("Random Forest Features Importance", fontweight="bold", fontsize = 12)
+plt.title("Random Forest Features Importance DUAL", fontweight="bold", fontsize = 12)
 sns.set(font_scale = 0.3)
+plt.rcParams['figure.dpi'] = 300
 plt.show()
