@@ -136,13 +136,35 @@ descr2 = dataset4.describe().T
 
 
 
-#### dataset for dummies
 df_for_dummies = dataset4.drop(['ID', 'CONSENSUS_PRIVACY', 'DATE_LAST_VISIT_DESK','DATE_LAST_REQUEST_CC',
                           'FIRST_ACTIVATION_DATE', 'DATE_LAST_CAMPAIGN', 'SUPPLY_START_DATE', 'EMAIL_VALIDATED',
-                          'PHONE_VALIDATED', 'YEAR_BIRTH', "AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH"], axis = 1)
+                          'PHONE_VALIDATED', 'YEAR_BIRTH', 
+                          'LAST_POWER_PRODUCT', 'LAST_MONTH_DESK_VISITS',
+                          'LAST_3MONTHS_DESK_VISITS', 'LAST_YEAR_DESK_VISITS',
+                          'LAST_MONTH_CC_REQUESTS', 'LAST_3MONTHS_CC_REQUESTS',
+                          'LAST_YEAR_CC_REQUESTS', 'INBOUND_CONTACTS_LAST_MONTH', 'INBOUND_CONTACTS_LAST_2MONTHS',
+                          'INBOUND_CONTACTS_LAST_YEAR','N_CAMPAIGN_SENT', 'N_CAMPAIGN_CLICKED', 'N_CAMPAIGN_OPENED',
+                          'N_DEM_CARING', 'N_SMS_CARING', 'N_TLS_CARING', 'N_DEM_RENEWAL',
+                          'N_SMS_RENEWAL', 'N_TLS_RENEWAL', 'N_DEM_CROSS_SELLING',
+                          'N_SMS_CROSS_SELLING', 'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
+                          'N_SMS_SOLUTION', 'N_TLS_SOLUTION'], axis = 1)
 dummy_df = pd.get_dummies(df_for_dummies)
 
 
+# UNDERSAMPLING
+class_2,class_1 = dummy_df.SOLUTIONS.value_counts()
+c2 = dummy_df[dummy_df['SOLUTIONS'] == 0]
+c1 = dummy_df[dummy_df['SOLUTIONS'] == 1]
+df_2 = c2.sample(class_1)
+under_sol = pd.concat([df_2,c1],axis=0)
+under_sol.SOLUTIONS.value_counts()
+
+class_2,class_1 = dummy_df.COMMODITY_DUAL.value_counts()
+c2 = dummy_df[dummy_df['COMMODITY_DUAL'] == 0]
+c1 = dummy_df[dummy_df['COMMODITY_DUAL'] == 1]
+df_2 = c2.sample(class_1)
+under_dual = pd.concat([df_2,c1],axis=0)
+under_dual.COMMODITY_DUAL.value_counts()
 
 
 ##### MEAN ANALYSIS #####
@@ -160,7 +182,8 @@ dummy_avg_df_2 = dummy_avg_df_2.drop(["COMMODITY_GAS", "COMMODITY_POWER"], axis=
 
 
 ## SOLUTIONS
-df_mean = dummy_df.groupby('SOLUTIONS').mean()
+df_mean = dummy_df.drop(["AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH"], axis = 1)
+df_mean = df_mean.groupby('SOLUTIONS').mean()
 df_mean.reset_index(drop=True, inplace=True)
 columns = list(df_mean.columns)
 df_mean = df_mean.T
@@ -180,7 +203,8 @@ avg_df_mean.plot(x="variables", y=[0, 1], kind="barh")
 
 
 ## DUAL
-df_mean_2 = dummy_df.groupby('COMMODITY_DUAL').mean()
+df_mean_2 = dummy_df.drop(["AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH"], axis = 1)
+df_mean_2 = df_mean_2.groupby('COMMODITY_DUAL').mean()
 df_mean_2.reset_index(drop=True, inplace=True)
 columns = list(df_mean_2.columns)
 df_mean_2 = df_mean_2.T
