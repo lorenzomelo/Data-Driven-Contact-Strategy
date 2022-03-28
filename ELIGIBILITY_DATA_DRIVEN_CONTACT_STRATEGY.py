@@ -189,7 +189,7 @@ def get_top_abs_correlations(df, n=5):
     return au_corr[0:n]
 
 print("Top Absolute Correlations")
-var_corr = get_top_abs_correlations(under_sol, 50)
+var_corr = get_top_abs_correlations(under_dual, 50)
 var_corr_2 = get_top_abs_correlations(under_sol, 50)
 
 sol_corr = under_sol[under_sol.columns].corr(method = "spearman")['SOLUTIONS'][:]
