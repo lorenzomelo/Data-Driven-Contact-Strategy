@@ -169,6 +169,37 @@ under_dual.COMMODITY_DUAL.value_counts()
 under_dual.to_csv("Logistic_dual.csv")
 
 
+
+
+### CORRELATIONS 
+import seaborn as sn
+
+def get_redundant_pairs(df):
+    pairs_to_drop = set()
+    cols = df.columns
+    for i in range(0, df.shape[1]):
+        for j in range(0, i+1):
+            pairs_to_drop.add((cols[i], cols[j]))
+    return pairs_to_drop
+
+def get_top_abs_correlations(df, n=5):
+    au_corr = df.corr(method = "spearman").abs().unstack()
+    labels_to_drop = get_redundant_pairs(df)
+    au_corr = au_corr.drop(labels=labels_to_drop).sort_values(ascending=False)
+    return au_corr[0:n]
+
+print("Top Absolute Correlations")
+var_corr = get_top_abs_correlations(under_sol, 50)
+var_corr_2 = get_top_abs_correlations(under_sol, 50)
+
+sol_corr = under_sol[under_sol.columns].corr(method = "spearman")['SOLUTIONS'][:]
+dual_corr = under_dual[under_dual.columns].corr(method = "spearman")['COMMODITY_DUAL'][:]
+sol_corr = pd.DataFrame(sol_corr).sort_values(by = 'SOLUTIONS', ascending=False)
+dual_corr = pd.DataFrame(dual_corr).sort_values(by = 'COMMODITY_DUAL', ascending=False)
+
+
+
+
 ##### MEAN ANALYSIS #####
 
 ### Analizziamo cosa caratterizza i "DUAL" e i "SOLUTIONS_1" guardando le medie
