@@ -259,7 +259,17 @@ avg_df_mean_2["variables"] = columns2
 avg_df_mean_2["difference"] = abs(avg_df_mean_2[0] - avg_df_mean_2[1])
 avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"])
 
+#FEAUTURE SELECTED FOR RECCOMENDATION
 
+recommend_sol = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'CLC_STATUS_2-Customer', 'COMMODITY_DUAL',
+                                 'COMMODITY_GAS', 'ZONE_Piemonte', 'AREA_North-West', "WEB_PORTAL_REGISTRATION", 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                 'N_DISUSED_GAS_POINTS','LAST_CAMPAIGN_TIPOLOGY_Communication','BEHAVIOUR_SCORE_GOOD PAYER', "AREA_South",
+                                 'LAST_CAMPAIGN_TIPOLOGY_Caring'], axis=1)
+
+recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'CLC_STATUS_2-Customer', "LAST_CAMPAIGN_TIPOLOGY_Cross-Selling",
+                                  "LAST_CAMPAIGN_TIPOLOGY_Communication", "WEB_PORTAL_REGISTRATION", 'CUSTOMER_SENIORITY_>3 YEARS',
+                                  'LAST_CAMPAIGN_TIPOLOGY_Caring','LAST_CAMPAIGN_TIPOLOGY_Renewal', 'AREA_North-West', 'AREA_South',
+                                  "ACQUISITION_CHANNEL_CC"], axis=1)
 
 
 
