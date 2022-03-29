@@ -461,12 +461,15 @@ plt.show()
 
 #FEAUTURE SELECTED FOR RECCOMENDATION
 
-recommend_sol = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'CLC_STATUS_2-Customer', 'COMMODITY_DUAL',
-                                 'COMMODITY_GAS', 'ZONE_Piemonte', 'AREA_North-West', "WEB_PORTAL_REGISTRATION", 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
-                                 'N_DISUSED_GAS_POINTS','LAST_CAMPAIGN_TIPOLOGY_Communication','BEHAVIOUR_SCORE_GOOD PAYER', "AREA_South",
-                                 'LAST_CAMPAIGN_TIPOLOGY_Caring'], axis=1)
+recommend_sol = dummy_df.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION', 
+                                 'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO', 
+                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
+                                 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER" ], axis=1)
 
-recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'CLC_STATUS_2-Customer', "LAST_CAMPAIGN_TIPOLOGY_Cross-Selling",
-                                  "LAST_CAMPAIGN_TIPOLOGY_Communication", "WEB_PORTAL_REGISTRATION", 'CUSTOMER_SENIORITY_>3 YEARS',
-                                  'LAST_CAMPAIGN_TIPOLOGY_Caring','LAST_CAMPAIGN_TIPOLOGY_Renewal', 'AREA_North-West', 'AREA_South',
-                                  "ACQUISITION_CHANNEL_CC"], axis=1)
+recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West',
+                                 'WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                 'N_DISUSED_GAS_POINTS', 
+                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
+                                 'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3' 
+                                 'LAST_GAS_PRODUCT_Traditional', 'SOLUTIONS', "COMMODITY_DUAL"], axis=1)
