@@ -271,6 +271,200 @@ recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'CLC_STATUS_2
                                   'LAST_CAMPAIGN_TIPOLOGY_Caring','LAST_CAMPAIGN_TIPOLOGY_Renewal', 'AREA_North-West', 'AREA_South',
                                   "ACQUISITION_CHANNEL_CC"], axis=1)
 
+#FEATURE SELECTION
+#RANDOM FOREST
+
+# DUAL
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 
 
+# df_random_dual = pd.read_csv("project_deloitte/Logistic_dual.csv")
+under_dual = under_dual.drop(['N_DEM_CROSS_SELLING', 'N_SMS_CROSS_SELLING',
+                              'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
+                              'N_SMS_SOLUTION', 'N_TLS_SOLUTION'], axis=1)
+X = under_dual.iloc[:, under_dual.columns != "COMMODITY_DUAL"].values
+y = under_dual["COMMODITY_DUAL"]
+
+#train test
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+
+#Scale
+
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# GRID SEARCH / OPTIMIZATION
+rf_final = RandomForestClassifier(random_state=0)
+param_grid = {
+    'n_estimators': [100, 500],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth': [4, 5, 6, 7, 8],
+    'criterion': ['gini', 'entropy']
+}
+CV_rfc = GridSearchCV(estimator=rf_final, param_grid=param_grid, cv=5)
+CV_rfc.fit(X_train, y_train)
+print(CV_rfc.best_params_)
+
+#MODEL
+rfc1=RandomForestClassifier(random_state=0, max_features='auto', n_estimators= 500, max_depth=7, criterion='gini')
+rfc1.fit(X_train, y_train)
+y_pred = rfc1.predict(X_test)
+
+# Evaluation metrics
+#CONFUSION MATRIX
+mat = confusion_matrix(y_test, y_pred)
+sns.heatmap(mat, square=True, annot=True, fmt='d', cbar=False)
+plt.xlabel('Predicted value')
+plt.ylabel('True value')
+plt.title("Random Forest Confusion Matrix", fontweight="bold", fontsize=12)
+plt.show()
+
+#ACCURACY
+accuracy_train = rfc1.score(X_train, y_train)
+print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
+print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
+print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
+
+#VISUALIZATION OF THE FEATURE_IMPORTANCE
+rfc1.feature_importances_
+sorted_idx = rfc1.feature_importances_.argsort()
+yaxis1 = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER',
+                                  'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER', 'N_GAS_POINTS',
+                                  'N_POWER_POINTS', 'N_DISUSED_GAS_POINTS', 'N_DISUSED_POWER_POINTS',
+                                  'N_TERMINATED_GAS_PER_SWITCH', 'N_TERMINATED_POWER_PER_SWITCH',
+                                  'N_TERMINATED_GAS_PER_VOLTURA', 'N_TERMINATED_POWER_PER_VOLTURA',
+                                  'N_RISK_CASES_CHURN_GAS', 'N_RISK_CASES_CHURN_POWER',
+                                  'N_MISSED_PAYMENTS', 'N_SWITCH_ANTI_CHURN', 'AVG_CONSUMPTION_GAS_M3',
+                                  'AVG_CONSUMPTION_POWER_KWH', 'GENRE_F', 'GENRE_M',
+                                  'COMMODITY_GAS', 'COMMODITY_POWER', 'ZONE_Abruzzo', 'ZONE_Basilicata',
+                                  'ZONE_Calabria', 'ZONE_Campania', 'ZONE_Emilia-Romagna',
+                                  'ZONE_Friuli-Venezia Giulia', 'ZONE_Lazio', 'ZONE_Liguria',
+                                  'ZONE_Lombardia', 'ZONE_Marche', 'ZONE_Molise', 'ZONE_Piemonte',
+                                  'ZONE_Puglia', 'ZONE_Sardegna', 'ZONE_Sicilia', 'ZONE_Toscana',
+                                  'ZONE_Trentino-Alto Adige', 'ZONE_Umbria',
+                                  "ZONE_Valle d'Aosta/VallÇ¸e d'Aoste", 'ZONE_Veneto', 'AREA_Center',
+                                  'AREA_North-East', 'AREA_North-West', 'AREA_South',
+                                  'CUSTOMER_SENIORITY_1-3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+                                  'CUSTOMER_SENIORITY_>3 YEARS', 'BEHAVIOUR_SCORE_BAD PAYER',
+                                  'BEHAVIOUR_SCORE_GOOD PAYER', 'BEHAVIOUR_SCORE_LATECOMER',
+                                  'CLC_STATUS_1-New', 'CLC_STATUS_2-Customer',
+                                  'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
+                                  'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
+                                  'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
+                                  'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelityÿ',
+                                  'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
+                                  'LAST_CAMPAIGN_TIPOLOGY_Caring', 'LAST_CAMPAIGN_TIPOLOGY_Communication',
+                                  'LAST_CAMPAIGN_TIPOLOGY_Comunicazione',
+                                  'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                  'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
+                                  'LAST_CAMPAIGN_TIPOLOGY_Solution'])
+
+plt.figure(figsize=(15, 15))
+sns.barplot(x=rfc1.feature_importances_[sorted_idx], y=yaxis1.columns[sorted_idx], orient="h",
+            palette="gist_rainbow")
+plt.xlabel("Random Forest Feature Importance")
+plt.title("Random Forest Features Importance DUAL", fontweight="bold", fontsize=12)
+sns.set(font_scale=0.3)
+plt.rcParams['figure.dpi'] = 300
+plt.show()
+
+#RANDOM
+#SOLUTION
+
+under_sol = under_sol.drop(['N_DEM_CROSS_SELLING', 'N_SMS_CROSS_SELLING',
+                            'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
+                            'N_SMS_SOLUTION', 'N_TLS_SOLUTION'], axis=1)
+X_sol = under_sol.iloc[:, under_sol.columns != "SOLUTIONS"].values
+y_sol = under_sol["SOLUTIONS"]
+
+#split
+X_train_s, X_test_s, y_train_s, y_test_s = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
+
+#scale
+sc = StandardScaler()
+X_train_s = sc.fit_transform(X_train_s)
+X_test_s = sc.transform(X_test_s)
+
+#GRID SEARCH
+rf_final_sol = RandomForestClassifier(0)
+param_grid = {
+    'n_estimators': [20, 500],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth': [3, 4, 5, 6, 7, 8],
+    'criterion': ['gini', 'entropy']
+}
+CV_rfc_sol = GridSearchCV(estimator=rf_final_sol, param_grid=param_grid, cv=5)
+CV_rfc_sol.fit(X_train_s, y_train_s)
+print(CV_rfc_sol.best_params_)
+
+#MODEL
+rfc2=RandomForestClassifier(random_state=0, max_features='log2', n_estimators= 20, max_depth=6, criterion='entropy')
+rfc2.fit(X_train_s, y_train_s)
+y_pred_s = rfc2.predict(X_test_s)
+
+# Evaluation metrics
+mat = confusion_matrix(y_test_s, y_pred_s)
+sns.heatmap(mat, square=True, annot=True, fmt='d', cbar=False)
+plt.xlabel('Predicted value')
+plt.ylabel('True value')
+plt.title("Random Forest Confusion Matrix", fontweight="bold", fontsize=12)
+plt.show()
+#ACCURACY
+accuracy_train = rfc2.score(X_train_s, y_train_s)
+print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test_s, y_pred_s)))
+print("Random Forest - Precision: " + str(precision_score(y_test_s, y_pred_s)))
+print("Random Forest - Recall: " + str(recall_score(y_test_s, y_pred_s)))
+
+#VISUALIZATION OF FEATURE IMPORTANCE
+rfc2.feature_importances_
+sorted_idx = rfc2.feature_importances_.argsort()
+yaxis1 = pd.DataFrame(X_sol, columns=['LOYALTY_PROGRAM', 'NEW_CUSTOMER',
+                                      'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER', 'N_GAS_POINTS',
+                                      'N_POWER_POINTS', 'N_DISUSED_GAS_POINTS', 'N_DISUSED_POWER_POINTS',
+                                      'N_TERMINATED_GAS_PER_SWITCH', 'N_TERMINATED_POWER_PER_SWITCH',
+                                      'N_TERMINATED_GAS_PER_VOLTURA', 'N_TERMINATED_POWER_PER_VOLTURA',
+                                      'N_RISK_CASES_CHURN_GAS', 'N_RISK_CASES_CHURN_POWER',
+                                      'N_MISSED_PAYMENTS', 'N_SWITCH_ANTI_CHURN', 'AVG_CONSUMPTION_GAS_M3',
+                                      'AVG_CONSUMPTION_POWER_KWH', 'GENRE_F', 'GENRE_M', 'COMMODITY_DUAL',
+                                      'COMMODITY_GAS', 'COMMODITY_POWER', 'ZONE_Abruzzo', 'ZONE_Basilicata',
+                                      'ZONE_Calabria', 'ZONE_Campania', 'ZONE_Emilia-Romagna',
+                                      'ZONE_Friuli-Venezia Giulia', 'ZONE_Lazio', 'ZONE_Liguria',
+                                      'ZONE_Lombardia', 'ZONE_Marche', 'ZONE_Molise', 'ZONE_Piemonte',
+                                      'ZONE_Puglia', 'ZONE_Sardegna', 'ZONE_Sicilia', 'ZONE_Toscana',
+                                      'ZONE_Trentino-Alto Adige', 'ZONE_Umbria',
+                                      "ZONE_Valle d'Aosta/VallÇ¸e d'Aoste", 'ZONE_Veneto', 'AREA_Center',
+                                      'AREA_North-East', 'AREA_North-West', 'AREA_South',
+                                      'CUSTOMER_SENIORITY_1-3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+                                      'CUSTOMER_SENIORITY_>3 YEARS', 'BEHAVIOUR_SCORE_BAD PAYER',
+                                      'BEHAVIOUR_SCORE_GOOD PAYER', 'BEHAVIOUR_SCORE_LATECOMER',
+                                      'CLC_STATUS_1-New', 'CLC_STATUS_2-Customer',
+                                      'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
+                                      'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
+                                      'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
+                                      'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelityÿ',
+                                      'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
+                                      'LAST_CAMPAIGN_TIPOLOGY_Caring', 'LAST_CAMPAIGN_TIPOLOGY_Communication',
+                                      'LAST_CAMPAIGN_TIPOLOGY_Comunicazione',
+                                      'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                      'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
+                                      'LAST_CAMPAIGN_TIPOLOGY_Solution'])
+
+plt.figure(figsize=(20, 20))
+sns.barplot(x=rfc2.feature_importances_[sorted_idx], y=yaxis1.columns[sorted_idx], orient="h",
+            palette="gist_rainbow")
+plt.xlabel("Random Forest Feature Importance")
+plt.title("Random Forest Features Importance SOLUTIONS", fontweight="bold", fontsize=12)
+sns.set(font_scale=0.3)
+plt.rcParams['figure.dpi'] = 300
+plt.show()
 
