@@ -472,4 +472,4 @@ recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-W
                                  'N_DISUSED_GAS_POINTS', 
                                  'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
                                  'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3' 
-                                 'LAST_GAS_PRODUCT_Traditional', 'SOLUTIONS', "COMMODITY_DUAL"], axis=1)
+                                 'LAST_GAS_PRODUCT_Traditional', "COMMODITY_DUAL"], axis=1)
