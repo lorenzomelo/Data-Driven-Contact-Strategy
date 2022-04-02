@@ -473,3 +473,57 @@ recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-W
                                  'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
                                  'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3' 
                                  'LAST_GAS_PRODUCT_Traditional', "COMMODITY_DUAL"], axis=1)
+
+
+#ELIGIBILITY
+
+column_names = ["ID", "Month_1", "Month_2", "Month_3", "Month_4", "Month_5", "Month_6",
+                "Month_7", "Month_8", "Month_9", "Month_10", "Month_11", "Month_12"]
+Cross_Selling_DEM = pd.DataFrame(columns=column_names)
+Cross_Selling_SMS = pd.DataFrame(columns=column_names)
+Cross_Selling_TLS = pd.DataFrame(columns=column_names)
+Solution_DEM = pd.DataFrame(columns=column_names)
+Solution_SMS = pd.DataFrame(columns=column_names)
+Solution_TLS = pd.DataFrame(columns=column_names)
+
+
+# CLEAN FOR CONSENSUS_PRIVACY, CLC_STATUS
+def clean_data_for_eligibility(df):
+    df = df.drop(df[df["CLC_STATUS"] == "4-Risk churn"].index)
+    df2 = df.drop(df[df["CLC_STATUS"] == "5-Leaving"].index)
+    df3 = df.drop(df[df["CONSENSUS_PRIVACY"] == "NO"].index)
+    return df3
+
+
+dataset_eligible = clean_data_for_eligibility(dataset)
+
+
+# CLEAN PER MAIL E PHONE
+def clean_phone(df):
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+
+dataset_final_eligible = clean_phone(dataset_eligible)
+
+# MERGE THE TWO
+dataset_final_eligible['randNumCol'] = np.random.randint(0, 2, size=len(dataset_final_eligible))  # add column with random number to proxy propensity
+
+### DIVIDING DATASET ACCORDING TO THE ELIGIBILITY
+pd.options.mode.chained_assignment = None
+timefmt = "%d/%m/%Y"
+dataset_final_eligible['DATE_LAST_CAMPAIGN'] = pd.to_datetime(dataset_final_eligible['DATE_LAST_CAMPAIGN'], format = timefmt)
+
+datatypes = dataset_final_eligible.dtypes
+
+dataset_final_eligible['REFERENCE_DATE'] = "26/04/2022"
+dataset_final_eligible['REFERENCE_DATE'] = pd.to_datetime(dataset_final_eligible['REFERENCE_DATE'], format = timefmt)
+
+dataset_final_eligible['N_months'] = ((dataset_final_eligible.DATE_LAST_CAMPAIGN - dataset_final_eligible.REFERENCE_DATE)/np.timedelta64(1, 'M'))
+dataset_final_eligible['N_months'] = dataset_final_eligible['N_months'].astype(int).abs()
+
+cross_selling_tls_general = dataset_final_eligible[dataset_final_eligible.N_months >= 6]
+cross_selling_dem_general = dataset_final_eligible[dataset_final_eligible.N_months >= 2] #SOLO I DEM VALIDATED
+cross_selling_sms_general = dataset_final_eligible[dataset_final_eligible.N_months >= 2]
+solution_tls_general = dataset_final_eligible[dataset_final_eligible.N_months >= 12]
+solution_dem_general = dataset_final_eligible[dataset_final_eligible.N_months >= 6]
+solution_sms_general = dataset_final_eligible[dataset_final_eligible.N_months >= 6]
