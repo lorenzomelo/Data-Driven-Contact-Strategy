@@ -521,9 +521,53 @@ dataset_final_eligible['REFERENCE_DATE'] = pd.to_datetime(dataset_final_eligible
 dataset_final_eligible['N_months'] = ((dataset_final_eligible.DATE_LAST_CAMPAIGN - dataset_final_eligible.REFERENCE_DATE)/np.timedelta64(1, 'M'))
 dataset_final_eligible['N_months'] = dataset_final_eligible['N_months'].astype(int).abs()
 
-cross_selling_tls_general = dataset_final_eligible[dataset_final_eligible.N_months >= 6]
-cross_selling_dem_general = dataset_final_eligible[dataset_final_eligible.N_months >= 2] #SOLO I DEM VALIDATED
-cross_selling_sms_general = dataset_final_eligible[dataset_final_eligible.N_months >= 2]
-solution_tls_general = dataset_final_eligible[dataset_final_eligible.N_months >= 12]
-solution_dem_general = dataset_final_eligible[dataset_final_eligible.N_months >= 6]
-solution_sms_general = dataset_final_eligible[dataset_final_eligible.N_months >= 6]
+cross_selling_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
+cross_selling_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0)] 
+cross_selling_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
+solution_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 12) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
+solution_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0)]
+solution_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
+
+#CROSS SELLING
+for index, row in cross_selling_dem_general.iterrows():
+    l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+    Cross_Selling_DEM.loc[len(Cross_Selling_DEM)] = l
+    
+for index, row in cross_selling_sms_general.iterrows():
+    l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+    Cross_Selling_SMS.loc[len(Cross_Selling_SMS)] = l
+
+for index, row in cross_selling_tls_general.iterrows():
+    l = [row["ID"],0,0,0,0,0,1,0,0,0,0,0,1]
+    Cross_Selling_TLS.loc[len(Solution_TLS)] = l
+
+#SOLUTIONS
+for index, row in solution_dem_general.iterrows():
+    if (row["PHONE_VALIDATED"] == "KO") & row["COMMODITY"] != "DUAL":
+        l = [row["ID"],0,1,0,1,0,1,0,1,0,1,0,1]
+        Solution_DEM.loc[len(Solution_DEM)] = l
+    elif (row["PHONE_VALIDATED"] == "KO") & row["COMMODITY"] == "DUAL":
+        m = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+        Solution_DEM.loc[len(Solution_DEM)] = m
+    elif (row["PHONE_VALIDATED"] != "KO") & row["COMMODITY"] == "DUAL":
+        n = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+        Solution_DEM.loc[len(Solution_DEM)] = n
+    elif (row["PHONE_VALIDATED"] != "KO") & row["COMMODITY"] != "DUAL":
+        o = [row["ID"],0,1,0,0,0,1,0,1,0,0,0,1]
+        Solution_DEM.loc[len(Solution_DEM)] = o
+
+for index, row in solution_dem_general.iterrows():
+    if row["COMMODITY"] == "DUAL":
+        l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+        Solution_SMS.loc[len(Solution_SMS)] = l
+    elif row["COMMODITY"] != "DUAL":
+        m = [row["ID"],0,1,0,0,0,1,0,1,0,0,0,1]
+        Solution_SMS.loc[len(Solution_SMS)] = m
+
+for index, row in cross_selling_tls_general.iterrows():
+    if row["COMMODITY"] == "DUAL":
+        l = [row["ID"],0,0,0,0,0,1,0,0,0,0,0,1]
+        Cross_Selling_TLS.loc[len(Solution_TLS)] = l
+    elif row["COMMODITY"] != "DUAL":
+        m = [row["ID"],0,0,0,1,0,0,0,0,0,1,0,0]
+        Cross_Selling_TLS.loc[len(Solution_TLS)] = m
