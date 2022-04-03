@@ -561,7 +561,7 @@ for index, row in solution_dem_general.iterrows():
         l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
         Solution_SMS.loc[len(Solution_SMS)] = l
     elif row["COMMODITY"] != "DUAL":
-        m = [row["ID"],0,1,0,0,0,1,0,1,0,0,0,1]
+        m = [row["ID"],0,1,0,0,0,0,0,1,0,0,0,0]
         Solution_SMS.loc[len(Solution_SMS)] = m
 
 for index, row in cross_selling_tls_general.iterrows():
@@ -571,3 +571,12 @@ for index, row in cross_selling_tls_general.iterrows():
     elif row["COMMODITY"] != "DUAL":
         m = [row["ID"],0,0,0,1,0,0,0,0,0,1,0,0]
         Cross_Selling_TLS.loc[len(Solution_TLS)] = m
+
+    
+    
+    
+    
+    
+    
+    
+    
