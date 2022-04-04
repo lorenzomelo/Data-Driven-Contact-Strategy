@@ -541,35 +541,35 @@ for index, row in cross_selling_tls_general.iterrows():
     l = [row["ID"],0,0,0,0,0,1,0,0,0,0,0,1]
     Cross_Selling_TLS.loc[len(Solution_TLS)] = l
 
-#SOLUTIONS
+#SOLUTION
 for index, row in solution_dem_general.iterrows():
-    if (row["PHONE_VALIDATED"] == "KO") & row["COMMODITY"] != "DUAL":
-        l = [row["ID"],0,1,0,1,0,1,0,1,0,1,0,1]
+    if (row["PHONE_VALIDATED"] == "KO") & (row["COMMODITY"] != "DUAL"):
+        l = [row["ID"],0,1,0,1,0,0,0,0,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = l
-    elif (row["PHONE_VALIDATED"] == "KO") & row["COMMODITY"] == "DUAL":
-        m = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+    elif (row["PHONE_VALIDATED"] == "KO") & (row["COMMODITY"] == "DUAL"):
+        m = [row["ID"],1,0,1,0,0,0,0,0,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = m
-    elif (row["PHONE_VALIDATED"] != "KO") & row["COMMODITY"] == "DUAL":
-        n = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+    elif (row["PHONE_VALIDATED"] != "KO") & (row["COMMODITY"] == "DUAL"):
+        n = [row["ID"],0,0,1,0,1,0,0,0,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = n
-    elif (row["PHONE_VALIDATED"] != "KO") & row["COMMODITY"] != "DUAL":
-        o = [row["ID"],0,1,0,0,0,1,0,1,0,0,0,1]
+    elif (row["PHONE_VALIDATED"] != "KO") & (row["COMMODITY"] != "DUAL"):
+        o = [row["ID"],0,0,0,1,0,0,0,1,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = o
 
-for index, row in solution_dem_general.iterrows():
+for index, row in solution_sms_general.iterrows():
     if row["COMMODITY"] == "DUAL":
-        l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
+        l = [row["ID"],0,0,1,0,1,0,0,0,0,0,0,0]
         Solution_SMS.loc[len(Solution_SMS)] = l
     elif row["COMMODITY"] != "DUAL":
-        m = [row["ID"],0,1,0,0,0,0,0,1,0,0,0,0]
+        m = [row["ID"],0,0,0,1,0,0,0,1,0,0,0,0]
         Solution_SMS.loc[len(Solution_SMS)] = m
 
-for index, row in cross_selling_tls_general.iterrows():
+for index, row in solution_tls_general.iterrows():
     if row["COMMODITY"] == "DUAL":
-        l = [row["ID"],0,0,0,0,0,1,0,0,0,0,0,1]
+        l = [row["ID"],1,0,0,0,0,0,0,0,0,0,0,0]
         Cross_Selling_TLS.loc[len(Solution_TLS)] = l
     elif row["COMMODITY"] != "DUAL":
-        m = [row["ID"],0,0,0,1,0,0,0,0,0,1,0,0]
+        m = [row["ID"],0,1,0,0,0,0,0,0,0,0,0,0]
         Cross_Selling_TLS.loc[len(Solution_TLS)] = m
 
     
