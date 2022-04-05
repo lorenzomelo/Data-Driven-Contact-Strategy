@@ -629,7 +629,7 @@ X_test = sc.transform(X_test)
 #GRIDSEARCH
 classifier = RandomForestClassifier(random_state = 0)
 param_grid = {
-    'n_estimators': [50,75,100,125,150],
+    'n_estimators': [90,95,100,105,110],
     'max_features': ['auto', 'sqrt', 'log2'],
     'max_depth': [4, 5, 6, 7, 8,9,10],
     'criterion': ['gini', 'entropy']
@@ -639,8 +639,8 @@ CV_rfc.fit(X_train, y_train)
 print(CV_rfc.best_params_)
 
 #MODEL
-rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=50,
-                              max_depth=5, criterion='gini')
+rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=100,
+                              max_depth=8, criterion='gini')
 rfc1.fit(X_train, y_train)
 y_pred = rfc1.predict(X_test)
 
