@@ -572,11 +572,89 @@ for index, row in solution_tls_general.iterrows():
         m = [row["ID"],0,1,0,0,0,0,0,0,0,0,0,0]
         Cross_Selling_TLS.loc[len(Solution_TLS)] = m
 
-    
-    
-    
-    
-    
+  
+  
+#PROPENSITY 2
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+#dataset = pd.read_csv("dataset4.csv", sep=",", index_col=0)
+#dummy_df = pd.read_csv("dummy_df.csv", sep=",", index_col=0)
+
+different_cols = dummy_df.columns.difference(dataset4.columns)
+dataset_difference = dummy_df[different_cols]
+
+dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
+                     right_index=True, how='inner')
+
+dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                     'N_DISUSED_GAS_POINTS', 
+                                     'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
+                                     'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3','LAST_GAS_PRODUCT_Traditional',
+                                     "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)  
+def non_elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
+    return df
+dataset_non_elegible = non_elegible(dataset_dual)
+dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
+
+def elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+dataset_elegible = elegible(dataset_dual)
+dataset_elegible = dataset_elegible.dropna(axis=0)
+
+class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
+c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
+c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
+df_2 = c2.sample(class_1)
+under_dual = pd.concat([df_2, c1], axis=0)
+
+X = under_dual.iloc[:, :-5].values
+y = under_dual["COMMODITY_DUAL"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+#SCALE
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+#GRIDSEARCH
+classifier = RandomForestClassifier(random_state = 0)
+param_grid = {
+    'n_estimators': [50,75,100,125,150],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth': [4, 5, 6, 7, 8,9,10],
+    'criterion': ['gini', 'entropy']
+}
+CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
+CV_rfc.fit(X_train, y_train)
+print(CV_rfc.best_params_)
+
+#MODEL
+rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=50,
+                              max_depth=5, criterion='gini')
+rfc1.fit(X_train, y_train)
+y_pred = rfc1.predict(X_test)
+
+accuracy_train = rfc1.score(X_train, y_train)
+print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
+print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
+print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
+
+X_pred = dataset_elegible.iloc[:, :-5].values
+X_pred = sc.transform(X_pred)
+predicted = rfc1.predict_proba(X_pred)
+predicted = pd.DataFrame(predicted)
+prova_propensity = predicted[predicted[1] > 0.5]
     
     
     
