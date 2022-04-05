@@ -586,11 +586,14 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 #dataset = pd.read_csv("dataset4.csv", sep=",", index_col=0)
 #dummy_df = pd.read_csv("dummy_df.csv", sep=",", index_col=0)
 
+#creo dataset con le features di dataset4 + quelle di dummy_df senza sovrapposizioni
 different_cols = dummy_df.columns.difference(dataset4.columns)
 dataset_difference = dummy_df[different_cols]
 
 dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
                      right_index=True, how='inner')
+
+#Seleziono le variabili + quelle che servono per fare sciegliere gli elegible
 
 dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
                                      'N_DISUSED_GAS_POINTS', 
@@ -609,7 +612,7 @@ def elegible(df):
     return df
 dataset_elegible = elegible(dataset_dual)
 dataset_elegible = dataset_elegible.dropna(axis=0)
-
+#creo dataset
 class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
 c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
 c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
