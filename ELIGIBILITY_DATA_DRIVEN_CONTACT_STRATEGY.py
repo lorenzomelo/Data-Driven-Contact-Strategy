@@ -568,6 +568,23 @@ predicted = pd.DataFrame(predicted)
 predicted = predicted[predicted[1] > 0.5]
 
 #LOGISTIC
+from sklearn.linear_model import LogisticRegression
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train.values.ravel())
+y_pred_log = logreg.predict(X_test)
+print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(X_test, y_test)))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_log)))
+print("Random Forest - Precision: " + str(precision_score(y_test, y_pred_log)))
+print("Random Forest - Recall: " + str(recall_score(y_test, y_pred_log)))
+
+cfm = confusion_matrix(y_test,y_pred)
+print(cfm)
+
+#PREDICTION OF THE LOGISTIC
+logistic_pred = logreg.predict_proba(X_pred)
+logistic_pred = pd.DataFrame(logistic_pred)
+dataset_predicted_log = logistic_pred[logistic_pred[1] > 0.5]
+
 #KNN
 
 
