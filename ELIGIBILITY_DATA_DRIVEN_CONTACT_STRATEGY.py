@@ -475,8 +475,215 @@ recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-W
                                  'LAST_GAS_PRODUCT_Traditional', "COMMODITY_DUAL"], axis=1)
 
 
-#ELIGIBILITY
 
+
+#PROPENSITY 
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+#dataset = pd.read_csv("dataset4.csv", sep=",", index_col=0)
+#dummy_df = pd.read_csv("dummy_df.csv", sep=",", index_col=0)
+
+#creo dataset con le features di dataset4 + quelle di dummy_df senza sovrapposizioni
+different_cols = dummy_df.columns.difference(dataset4.columns)
+dataset_difference = dummy_df[different_cols]
+
+dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
+                     right_index=True, how='inner')
+
+#Seleziono le variabili + quelle che servono per fare sciegliere gli elegible
+dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                     'N_DISUSED_GAS_POINTS', 
+                                     'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
+                                     'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3','LAST_GAS_PRODUCT_Traditional',
+                                     "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)
+
+
+#DUAL
+def non_elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
+    return df
+dataset_non_elegible = non_elegible(dataset_dual)
+dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
+
+def elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+dataset_elegible = elegible(dataset_dual)
+dataset_elegible = dataset_elegible.dropna(axis=0)
+
+#creo dataset bilanciato random
+class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
+c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
+c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
+df_2 = c2.sample(class_1)
+under_dual = pd.concat([df_2, c1], axis=0)
+
+X = under_dual.iloc[:, :-5].values
+y = under_dual["COMMODITY_DUAL"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+#SCALE
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+#RANDOMFOREST
+#GRIDSEARCH
+classifier = RandomForestClassifier(random_state = 0)
+param_grid = {
+    'n_estimators': [90,95,100,105,110],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth': [4, 5, 6, 7, 8,9,10],
+    'criterion': ['gini', 'entropy']
+}
+CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
+CV_rfc.fit(X_train, y_train)
+print(CV_rfc.best_params_)
+
+#MODEL
+rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=100,
+                              max_depth=8, criterion='gini')
+rfc1.fit(X_train, y_train)
+y_pred = rfc1.predict(X_test)
+
+accuracy_train = rfc1.score(X_train, y_train)
+print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
+print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
+print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
+
+X_pred = dataset_elegible.iloc[:, :-5].values
+X_pred = sc.transform(X_pred)
+predicted = rfc1.predict_proba(X_pred)
+predicted = pd.DataFrame(predicted)
+predicted = predicted[predicted[1] > 0.5]
+
+#LOGISTIC
+#KNN
+
+
+################################################
+
+#SOLUTION
+def non_elegible_sol(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["SOLUTIONS"] == 0)].index)
+    return df
+def elegible_sol(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["SOLUTIONS"] == 1)].index)
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+
+dataset_sol = dataset_whole.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION', 
+                                 'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO', 
+                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
+                                 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER", "CONSENSUS_PRIVACY", "ID" 
+                                 ,"PHONE_VALIDATED", "EMAIL_VALIDATED", "SOLUTIONS"], axis=1)
+
+dataset_elegib_sol = elegible_sol(dataset_sol)
+dataset_non_elegib_sol = non_elegible_sol(dataset_sol)
+dataset_elegib_sol.dropna(axis=0, inplace=True)
+dataset_non_elegib_sol.dropna(axis=0, inplace=True)
+
+class_2, class_1 = dataset_non_elegib_sol.SOLUTIONS.value_counts()
+c2 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 0]
+c1 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 1]
+df_3 = c2.sample(class_1)
+under_sol = pd.concat([df_3, c1], axis=0)
+
+X_sol = under_sol.iloc[:, :-5].values
+y_sol = under_sol["SOLUTIONS"]
+
+X_train_sol, X_test_sol, y_train_sol, y_test_sol = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
+#SCALE
+sc = StandardScaler()
+X_train_sol = sc.fit_transform(X_train_sol)
+X_test_sol = sc.transform(X_test_sol)
+
+##RANDOMFOREST
+classifier = RandomForestClassifier(random_state = 0)
+param_grid = {
+    'n_estimators': [90,95,100,105,110],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth': [4, 5, 6, 7, 8,9,10],
+    'criterion': ['gini', 'entropy']
+}
+CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
+CV_rfc.fit(X_train_sol, y_train_sol)
+print(CV_rfc.best_params_)
+rfc2 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=105,
+                              max_depth=4, criterion='gini')
+rfc2.fit(X_train_sol, y_train_sol)
+y_pred_sol = rfc2.predict(X_test_sol)
+accuracy_train = rfc2.score(X_train_sol, y_train_sol)
+print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_sol)))
+print("Random Forest - Precision: " + str(precision_score(y_test_sol, y_pred_sol)))
+print("Random Forest - Recall: " + str(recall_score(y_test_sol, y_pred_sol)))
+
+#PREDICTION ON THE ELEGIBLES
+X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
+X_pred_sol = sc.transform(X_pred_sol)
+predicted_sol = rfc2.predict_proba(X_pred_sol)
+predicted_sol = pd.DataFrame(predicted_sol)
+predicted_sol = predicted_sol[predicted_sol[1] > 0.4]
+
+#SVM##########
+#GRIDSEARCH
+modelsvr = SVC()
+param = {'kernel' : ('linear', 'poly', 'rbf', 'sigmoid'),'C' : [1,5,10],'degree' : [3,8],'coef0' : [0.01,10,0.5],'gamma' : ('auto','scale')}
+CV_svm = GridSearchCV(estimator=modelsvr, param_grid=param, cv=5)
+CV_svm.fit(X_train_sol, y_train_sol)
+print(CV_svm.best_params_)
+#model
+svm_model = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
+svm_model.fit(X_train_sol, y_train_sol)
+y_pred_svm = svm_model.predict(X_test_sol)
+accuracy_train = svm_model.score(X_train_sol, y_train_sol)
+
+#ACCURACY
+print(accuracy_train)
+print("Accuracy on the training set: " + str(accuracy_train))
+print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_svm)))
+print("Precision: " + str(precision_score(y_test_sol, y_pred_svm)))
+print("Recall: " + str(recall_score(y_test_sol, y_pred_svm)))
+
+#CALIBRATION
+svm = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
+clf = CalibratedClassifierCV(svm_model, cv=3) 
+clf.fit(X_train_sol, y_train_sol)
+y_proba = clf.predict_proba(X_test_sol)
+y_proba = pd.DataFrame(y_proba)
+y_test_sol = pd.DataFrame(y_test_sol)
+
+#PREDICTION ON THE Y_TEST_SOL
+predicted_svm = pd.concat([y_proba.reset_index(drop=True),y_test_sol.reset_index(drop=True)], axis=1)
+predicted_svm['predicted'] = np.where(predicted_svm[0]>= 0.5, 0,1)
+confusion_matrix = pd.crosstab(predicted_svm['SOLUTIONS'], predicted_svm['predicted'], rownames=['Actual'], colnames=['Predicted'])
+print(confusion_matrix)
+
+#PREDICTION ON THE ELEGIBLES
+X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
+X_pred_sol = sc.transform(X_pred_sol)
+pred_solution = clf.predict_proba(X_pred_sol)
+pred_solution = pd.DataFrame(pred_solution)
+pred_solution = pred_solution[pred_solution[1]>0.5]
+
+#LOGISTIC
+#KNN
+
+#############################################################
+
+#ELIGIBILITY
 column_names = ["ID", "Month_1", "Month_2", "Month_3", "Month_4", "Month_5", "Month_6",
                 "Month_7", "Month_8", "Month_9", "Month_10", "Month_11", "Month_12"]
 Cross_Selling_DEM = pd.DataFrame(columns=column_names)
@@ -572,92 +779,7 @@ for index, row in solution_tls_general.iterrows():
         m = [row["ID"],0,1,0,0,0,0,0,0,0,0,0,0]
         Cross_Selling_TLS.loc[len(Solution_TLS)] = m
 
-  
-  
-#PROPENSITY 2
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-
-#dataset = pd.read_csv("dataset4.csv", sep=",", index_col=0)
-#dummy_df = pd.read_csv("dummy_df.csv", sep=",", index_col=0)
-
-#creo dataset con le features di dataset4 + quelle di dummy_df senza sovrapposizioni
-different_cols = dummy_df.columns.difference(dataset4.columns)
-dataset_difference = dummy_df[different_cols]
-
-dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
-                     right_index=True, how='inner')
-
-#Seleziono le variabili + quelle che servono per fare sciegliere gli elegible
-
-dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
-                                     'N_DISUSED_GAS_POINTS', 
-                                     'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
-                                     'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3','LAST_GAS_PRODUCT_Traditional',
-                                     "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)  
-def non_elegible(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
-    return df
-dataset_non_elegible = non_elegible(dataset_dual)
-dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
-
-def elegible(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
-    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
-    return df
-dataset_elegible = elegible(dataset_dual)
-dataset_elegible = dataset_elegible.dropna(axis=0)
-#creo dataset
-class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
-c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
-c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
-df_2 = c2.sample(class_1)
-under_dual = pd.concat([df_2, c1], axis=0)
-
-X = under_dual.iloc[:, :-5].values
-y = under_dual["COMMODITY_DUAL"]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-
-#SCALE
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
-
-#GRIDSEARCH
-classifier = RandomForestClassifier(random_state = 0)
-param_grid = {
-    'n_estimators': [90,95,100,105,110],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth': [4, 5, 6, 7, 8,9,10],
-    'criterion': ['gini', 'entropy']
-}
-CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
-CV_rfc.fit(X_train, y_train)
-print(CV_rfc.best_params_)
-
-#MODEL
-rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=100,
-                              max_depth=8, criterion='gini')
-rfc1.fit(X_train, y_train)
-y_pred = rfc1.predict(X_test)
-
-accuracy_train = rfc1.score(X_train, y_train)
-print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
-print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
-print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
-print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
-
-X_pred = dataset_elegible.iloc[:, :-5].values
-X_pred = sc.transform(X_pred)
-predicted = rfc1.predict_proba(X_pred)
-predicted = pd.DataFrame(predicted)
-prova_propensity = predicted[predicted[1] > 0.5]
+       
     
     
     
