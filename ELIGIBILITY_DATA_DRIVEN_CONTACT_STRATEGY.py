@@ -585,7 +585,120 @@ logistic_pred = logreg.predict_proba(X_pred)
 logistic_pred = pd.DataFrame(logistic_pred)
 dataset_predicted_log = logistic_pred[logistic_pred[1] > 0.5]
 
+
 #KNN
+
+
+#### KNN
+#creo dataset con le features di dataset4 + quelle di dummy_df senza sovrapposizioni
+different_cols = dummy_df.columns.difference(dataset4.columns)
+dataset_difference = dummy_df[different_cols]
+
+dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
+                     right_index=True, how='inner')
+
+#Seleziono le variabili + quelle che servono per fare sciegliere gli elegible
+dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                     'N_DISUSED_GAS_POINTS',
+                                     'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal',
+                                     'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3','LAST_GAS_PRODUCT_Traditional',
+                                     "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)
+
+
+#DUAL
+def non_elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
+    return df
+dataset_non_elegible = non_elegible(dataset_dual)
+dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
+
+def elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+dataset_elegible = elegible(dataset_dual)
+dataset_elegible = dataset_elegible.dropna(axis=0)
+
+
+#creo dataset bilanciato random
+class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
+c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
+c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
+df_2 = c2.sample(class_1)
+under_dual = pd.concat([df_2, c1], axis=0)
+
+X = under_dual.iloc[:, :-5].values
+y = under_dual["COMMODITY_DUAL"]
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train_dual, y_test_dual = train_test_split(X, y, test_size=0.3, random_state=0)
+
+#SCALE
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train_dual = sc.fit_transform(X_train)
+X_test_dual = sc.transform(X_test)
+
+
+from sklearn.neighbors import KNeighborsClassifier
+
+#TUNING
+from sklearn.model_selection import GridSearchCV
+model = KNeighborsClassifier()
+param_grid = {'n_neighbors': [K for K in range(1,25)]}
+CV_knn = GridSearchCV(estimator=model, param_grid=param_grid, cv=5)
+CV_knn.fit(X_train_dual, y_train_dual)
+print(CV_knn.best_params_)
+
+#MODEL
+knn_model_dual = KNeighborsClassifier(n_neighbors = 19)
+knn_model_dual.fit(X_train_dual, y_train_dual)
+y_pred_knn_dual =knn_model_dual.predict(X_test_dual)
+
+'''
+# Evaluation metrics
+accuracy_train = knn_model_dual.score(X_train_dual, y_train_dual)
+print("KNN - Accuracy on the training set: " + str(accuracy_train))
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test_dual, y_pred_knn_dual)))
+print("KNN - Precision: " + str(precision_score(y_test_dual, y_pred_knn_dual)))
+print("KNN - Recall: " + str(recall_score(y_test_dual,y_pred_knn_dual)))
+'''
+
+
+#CALIBRATION
+from sklearn.calibration import CalibratedClassifierCV
+calib_clf_dual = CalibratedClassifierCV(knn_model_dual, cv=3, method='sigmoid')
+calib_clf_dual.fit(X_train_dual, y_train_dual)
+y_calibprob_dual = calib_clf_dual.predict_proba(X_test_dual)
+y_calibprob_dual = pd.DataFrame(y_calibprob_dual)
+y_test_dual = pd.DataFrame(y_test_dual)
+
+#PREDICTION ON THE Y_TEST_SOL
+predicted_knn_dual = pd.concat([y_calibprob_dual.reset_index(drop=True),y_test_dual.reset_index(drop=True)], axis=1)
+predicted_knn_dual['predicted'] = np.where(predicted_knn_dual[0]>= 0.5, 0,1)
+
+confusion_matrix_dual = pd.crosstab(predicted_knn_dual['COMMODITY_DUAL'], predicted_knn_dual['predicted'], rownames=['Actual'], colnames=['Predicted'])
+print(confusion_matrix_dual)
+
+print("KNN for dual - Accuracy: " + str((448+483)/1083))
+print("KNN for dual - Precision: " + str((483)/(104+483)))
+print("KNN for dual - Recall: " + str((483)/(483+48)))
+
+
+
+#PREDICTION ON THE ELEGIBLES
+X_pred_dual = dataset_elegible.iloc[:,:-5]
+X_pred_dual = sc.transform(X_pred_dual)
+pred_dual = calib_clf_dual.predict_proba(X_pred_dual)
+pred_dual = pd.DataFrame(pred_dual)
+ID_column = dataset_elegible["ID"]
+pred_dual = pd.concat([pred_dual, ID_column.reset_index(drop=True)], axis = 1)
+pred_dual = pred_dual[pred_dual[1]>0.5]
+
+
+
+
 
 
 ################################################
@@ -696,7 +809,111 @@ pred_solution = pd.DataFrame(pred_solution)
 pred_solution = pred_solution[pred_solution[1]>0.5]
 
 #LOGISTIC
+
+
+
+
+
 #KNN
+
+
+
+def non_elegible_sol(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["SOLUTIONS"] == 0)].index)
+    return df
+def elegible_sol(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["SOLUTIONS"] == 1)].index)
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+
+dataset_sol = dataset_whole.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION',
+                                 'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO',
+                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
+                                 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER", "CONSENSUS_PRIVACY", "ID"
+                                 ,"PHONE_VALIDATED", "EMAIL_VALIDATED", "SOLUTIONS"], axis=1)
+
+dataset_elegib_sol = elegible_sol(dataset_sol)
+dataset_non_elegib_sol = non_elegible_sol(dataset_sol)
+dataset_elegib_sol.dropna(axis=0, inplace=True)
+dataset_non_elegib_sol.dropna(axis=0, inplace=True)
+
+class_2, class_1 = dataset_non_elegib_sol.SOLUTIONS.value_counts()
+c2 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 0]
+c1 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 1]
+df_3 = c2.sample(class_1)
+under_sol = pd.concat([df_3, c1], axis=0)
+
+X_sol = under_sol.iloc[:, :-5].values
+y_sol = under_sol["SOLUTIONS"]
+
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train_sol, y_test_sol = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
+
+#SCALE
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train_sol = sc.fit_transform(X_train)
+X_test_sol = sc.transform(X_test)
+
+
+from sklearn.neighbors import KNeighborsClassifier
+
+#TUNING
+from sklearn.model_selection import GridSearchCV
+model = KNeighborsClassifier()
+param_grid = {'n_neighbors': [K for K in range(3,17)]}
+CV_knn = GridSearchCV(estimator=model, param_grid=param_grid, cv=5)
+CV_knn.fit(X_train_sol, y_train_sol)
+print(CV_knn.best_params_)
+
+#MODEL
+knn_model_sol = KNeighborsClassifier(n_neighbors = 9)
+knn_model_sol.fit(X_train_sol, y_train_sol)
+y_pred_knn_sol =knn_model_sol.predict(X_test_sol)
+
+'''
+# Evaluation metrics
+accuracy_train = knn_model_sol.score(X_train_sol, y_train_sol)
+print("KNN - Accuracy on the training set: " + str(accuracy_train))
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_knn_sol)))
+print("KNN - Precision: " + str(precision_score(y_test_sol, y_pred_knn_sol)))
+print("KNN - Recall: " + str(recall_score(y_test_sol,y_pred_knn_sol)))
+'''
+
+#CALIBRATION
+from sklearn.calibration import CalibratedClassifierCV
+calib_clf_sol = CalibratedClassifierCV(knn_model_sol, cv=3, method='sigmoid')
+calib_clf_sol.fit(X_train_sol, y_train_sol)
+y_calibprob_sol = calib_clf_sol.predict_proba(X_test_sol)
+y_calibprob_sol = pd.DataFrame(y_calibprob_sol)
+y_test_sol = pd.DataFrame(y_test_sol)
+
+#PREDICTION ON THE Y_TEST_SOL
+predicted_knn_sol = pd.concat([y_calibprob_sol.reset_index(drop=True),y_test_sol.reset_index(drop=True)], axis=1)
+predicted_knn_sol['predicted'] = np.where(predicted_knn_sol[0]>= 0.5, 0,1)
+
+confusion_matrix_sol = pd.crosstab(predicted_knn_sol['SOLUTIONS'], predicted_knn_sol['predicted'], rownames=['Actual'], colnames=['Predicted'])
+print(confusion_matrix_sol)
+
+print("KNN for solutions - Accuracy: " + str((36+32)/105))
+print("KNN for solutions - Precision: " + str((32)/(32+18)))
+print("KNN for solutions - Recall: " + str((32)/(32+19)))
+
+
+#PREDICTION ON THE ELEGIBLES
+X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
+X_pred_sol = sc.transform(X_pred_sol)
+pred_sol = calib_clf_sol.predict_proba(X_pred_sol)
+pred_sol = pd.DataFrame(pred_sol)
+ID_column = dataset_elegib_sol["ID"]
+pred_sol = pd.concat([pred_sol, ID_column.reset_index(drop=True)], axis = 1)
+pred_sol = pred_sol[pred_sol[1]>0.5]
+
+
+
 
 #############################################################
 
