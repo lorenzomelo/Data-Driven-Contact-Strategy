@@ -581,65 +581,45 @@ cfm = confusion_matrix(y_test,y_pred)
 print(cfm)
 
 #PREDICTION OF THE LOGISTIC
-logistic_pred = logreg.predict_proba(X_pred)
-logistic_pred = pd.DataFrame(logistic_pred)
-dataset_predicted_log = logistic_pred[logistic_pred[1] > 0.5]
+pred_dual_log = logreg.predict_proba(X_pred)
+pred_dual_log = pd.DataFrame(pred_dual_log)
+pred_dual_log['ID']= dataset_elegible['ID'].values
+pred_dual_log = pred_dual_log[pred_dual_log[1] > 0.2]
 
 
-#KNN
+#SVM
+from sklearn.svm import SVC
+#GRID
+modelsvr = SVC()
+param = {'kernel' : ('linear', 'poly', 'rbf', 'sigmoid'),'C' : [1,5,10],'degree' : [3,8],'coef0' : [0.01,10,0.5],'gamma' : ('auto','scale')}
+CV_svm = GridSearchCV(estimator=modelsvr, param_grid=param, cv=5)
+CV_svm.fit(X_train, y_train)
+print(CV_svm.best_params_)
+
+svm_model = SVC(C=1, coef0=0.01, degree=3, gamma='auto', kernel='rbf')
+svm_model.fit(X_train, y_train)
+y_pred_svm = svm_model.predict(X_test)
+
+accuracy_train = svm_model.score(X_train, y_train)
+print("Accuracy on the training set: " + str(accuracy_train))
+print("Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_svm)))
+print("Precision: " + str(precision_score(y_test, y_pred_svm)))
+print("Recall: " + str(recall_score(y_test, y_pred_svm)))
+
+#CALIBRATION
+svm = SVC(C=1, coef0=0.01, degree=3, gamma='auto', kernel='rbf')
+clf = CalibratedClassifierCV(svm_model, cv=3) 
+clf.fit(X_train, y_train)
+y_proba = clf.predict_proba(X_test)
+
+#PREDICTION
+pred_dual_svm = clf.predict_proba(X_pred)
+pred_dual_svm = pd.DataFrame(pred_dual_svm)
+pred_dual_svm['ID']= dataset_elegible['ID'].values
+pred_dual_svm = pred_dual_svm[pred_dual_svm[1]>0.2]
 
 
 #### KNN
-#creo dataset con le features di dataset4 + quelle di dummy_df senza sovrapposizioni
-different_cols = dummy_df.columns.difference(dataset4.columns)
-dataset_difference = dummy_df[different_cols]
-
-dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
-                     right_index=True, how='inner')
-
-#Seleziono le variabili + quelle che servono per fare sciegliere gli elegible
-dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
-                                     'N_DISUSED_GAS_POINTS',
-                                     'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal',
-                                     'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3','LAST_GAS_PRODUCT_Traditional',
-                                     "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)
-
-
-#DUAL
-def non_elegible(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
-    return df
-dataset_non_elegible = non_elegible(dataset_dual)
-dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
-
-def elegible(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
-    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
-    return df
-dataset_elegible = elegible(dataset_dual)
-dataset_elegible = dataset_elegible.dropna(axis=0)
-
-
-#creo dataset bilanciato random
-class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
-c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
-c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
-df_2 = c2.sample(class_1)
-under_dual = pd.concat([df_2, c1], axis=0)
-
-X = under_dual.iloc[:, :-5].values
-y = under_dual["COMMODITY_DUAL"]
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train_dual, y_test_dual = train_test_split(X, y, test_size=0.3, random_state=0)
-
-#SCALE
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X_train_dual = sc.fit_transform(X_train)
-X_test_dual = sc.transform(X_test)
-
-
 from sklearn.neighbors import KNeighborsClassifier
 
 #TUNING
