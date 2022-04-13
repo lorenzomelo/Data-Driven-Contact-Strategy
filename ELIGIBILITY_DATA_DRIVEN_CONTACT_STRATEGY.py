@@ -789,55 +789,20 @@ pred_solution = pd.DataFrame(pred_solution)
 pred_solution = pred_solution[pred_solution[1]>0.5]
 
 #LOGISTIC
+mod_log_sol = LogisticRegression()
+mod_log_sol.fit(X_train_sol, y_train_sol.values.ravel())
+mod_pred_log = mod_log_sol.predict(X_test_sol)
 
+print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, mod_pred_log)))
+print("Precision: " + str(precision_score(y_test_sol, mod_pred_log)))
+print("Recall: " + str(recall_score(y_test_sol, mod_pred_log)))
 
-
+pred_solution_log = mod_log_sol.predict_proba(X_pred_sol)
+pred_solution_log = pd.DataFrame(pred_solution_log)
+pred_solution_log['ID']= dataset_elegib_sol['ID'].values
 
 
 #KNN
-
-
-
-def non_elegible_sol(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["SOLUTIONS"] == 0)].index)
-    return df
-def elegible_sol(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["SOLUTIONS"] == 1)].index)
-    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
-    return df
-
-dataset_sol = dataset_whole.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION',
-                                 'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO',
-                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
-                                 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
-                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER", "CONSENSUS_PRIVACY", "ID"
-                                 ,"PHONE_VALIDATED", "EMAIL_VALIDATED", "SOLUTIONS"], axis=1)
-
-dataset_elegib_sol = elegible_sol(dataset_sol)
-dataset_non_elegib_sol = non_elegible_sol(dataset_sol)
-dataset_elegib_sol.dropna(axis=0, inplace=True)
-dataset_non_elegib_sol.dropna(axis=0, inplace=True)
-
-class_2, class_1 = dataset_non_elegib_sol.SOLUTIONS.value_counts()
-c2 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 0]
-c1 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 1]
-df_3 = c2.sample(class_1)
-under_sol = pd.concat([df_3, c1], axis=0)
-
-X_sol = under_sol.iloc[:, :-5].values
-y_sol = under_sol["SOLUTIONS"]
-
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train_sol, y_test_sol = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
-
-#SCALE
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X_train_sol = sc.fit_transform(X_train)
-X_test_sol = sc.transform(X_test)
-
-
 from sklearn.neighbors import KNeighborsClassifier
 
 #TUNING
