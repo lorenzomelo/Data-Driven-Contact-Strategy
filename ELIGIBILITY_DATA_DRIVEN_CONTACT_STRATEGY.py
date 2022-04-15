@@ -8,88 +8,116 @@ dataset = pd.DataFrame(dataset)
 
 ###### EXPLORATORY DATA ANALYSIS #######
 
-#### SOLUTIONS ####
-'''
+
+#### COMMODITY ####
+
+df_start = dataset.copy()
+df_dummy_visual = pd.get_dummies(df_start["COMMODITY"])
+df_commodity_eda = pd.concat([df_start.reset_index(drop=True), df_dummy_visual.reset_index(drop=True)], axis=1)
+
+sns.countplot("DUAL", data = df_commodity_eda, palette = "hls")
+plt.title('COMMODITY_DUAL', fontweight="bold", fontsize =10)
+plt.show()
+
+
+##### SOLUTIONS #####
+
+sns.countplot("SOLUTIONS", data = dataset, palette = "hls")
+plt.title('SOLUTIONS', fontweight="bold", fontsize =10)
+plt.show()
+
+#The following graphs show the distribution of variables per solution values
+
 #COMMODITY
-crosstab_commodity_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
-                                    columns=dataset4["COMMODITY"], normalize='index')
+crosstab_commodity_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["COMMODITY"], normalize='index')
 crosstab_commodity_solutions.plot.bar(figsize=(6, 4),
                                rot=0).set(ylabel="Count", xlabel = "Solution")
-plt.title('Solutions by commodity type', fontweight="bold", fontsize =10)
+plt.title('Solutions by Commodity type', fontweight="bold", fontsize =10)
 plt.show()
+
 #PRIVACY
-crosstab_privacy_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
-                                    columns=dataset4["CONSENSUS_PRIVACY"], normalize='index')
+crosstab_privacy_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["CONSENSUS_PRIVACY"], normalize='index')
 crosstab_privacy_solutions.plot.bar(figsize=(6, 4),
                                rot=0, color=('red', 'green')).set(ylabel="Percentage", xlabel = "Solution")
 plt.title('Solutions by Privacy Consensus', fontweight="bold", fontsize =10)
 plt.show()
+
+
 #CUSTOMER SENIORITY
-crosstab_custsen_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
-                                    columns=dataset4["CUSTOMER_SENIORITY"], normalize='index')
+crosstab_custsen_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["CUSTOMER_SENIORITY"], normalize='index')
 crosstab_custsen_solutions.plot.bar(figsize=(6, 4),
                                rot=0, color=('hotpink', 'deeppink', 'mediumvioletred')).set(ylabel="Percentage", xlabel = "Solution")
 plt.title('Solutions by Customer Seniority', fontweight="bold", fontsize =10)
 plt.show()
+
 #GENDER
-crosstab_genre_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
-                                    columns=dataset4["GENRE"], normalize='index')
+crosstab_genre_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["GENRE"], normalize='index')
 crosstab_genre_solutions.plot.bar(figsize=(6, 4),
                                rot=0, color=('lightcoral', 'gold')).set(ylabel="Percentage", xlabel = "Solution")
 plt.title('Solutions by Genre', fontweight="bold", fontsize =10)
 plt.show()
 
 #LOYALITY PROGRAM
-crosstab_loyalityprog_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
-                                    columns=dataset4["LOYALTY_PROGRAM"], normalize='index')
+crosstab_loyalityprog_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["LOYALTY_PROGRAM"], normalize='index')
 crosstab_loyalityprog_solutions.plot.bar(figsize=(6, 4),
                                rot=0, color=('darkorchid', 'royalblue')).set(ylabel="Percentage", xlabel = "Solution")
 plt.title('Solutions by Loyalty Program', fontweight="bold", fontsize =10)
 plt.show()
 
 #AREA
-crosstab_area_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
-                                    columns=dataset4["AREA"], normalize='index')
+crosstab_area_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["AREA"], normalize='index')
 crosstab_area_solutions.plot.bar(figsize=(6, 4),
                                rot=0, color=('limegreen', 'lightcoral', 'deepskyblue', 'gold')).set(ylabel="Percentage", xlabel = "Solution")
 plt.title('Solutions by Area of Italy', fontweight="bold", fontsize =10)
 plt.show()
 
 #FLAG_BAD_CUSTOMER
-crosstab_flag_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
-                                    columns=dataset4["FLAG_BAD_CUSTOMER"], normalize='index')
+crosstab_flag_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["FLAG_BAD_CUSTOMER"], normalize='index')
 crosstab_flag_solutions.plot.bar(figsize=(6, 4),
                                rot=0, color=('yellowgreen', 'crimson')).set(ylabel="Percentage", xlabel = "Solution")
 plt.title('Solutions by Bad Customer Flag', fontweight="bold", fontsize =10)
 plt.show()
 
 #AVG CONSUMPTION GAS and AVG CONSUMPTION POWER
-bp = sns.boxplot(data = dataset, x = "SOLUTIONS", y= "AVG_CONSUMPTION_GAS_M3", hue="SOLUTIONS")  # RUN PLOT
+bp = sns.boxplot(data = dataset, x = "SOLUTIONS", y= "AVG_CONSUMPTION_GAS_M3", hue="SOLUTIONS")  
 bp.set_ylim([0, 200000])
 plt.show()
 
-#INBOUND CONTACTS LAST YEAR
-hp = sns.histplot(data=dataset, x="INBOUND_CONTACTS_LAST_YEAR")
-hp.set_xlim([0, 20])
-plt.show()
-#N MISSED PAYMENTS
-
-#N CAMPAIGN SENT
-
-#N DEM, N SMS, N TLS SOLUTION
-
-#BEHAVIOUR SCORE
-
-#CLC STATUS
-
-#ACQUISITION CHANNEL
-
 
 '''
+f, axes = plt.subplots(1, 2, figsize=(15, 6))
+f.tight_layout()
+g1 = sns.histplot(data = dataset[dataset["SOLUTIONS"] == 1], x = "AVG_CONSUMPTION_GAS_M3", kde=True, color = "green", ax=axes[0], bins=100)
+g1.set_title('Average consumption gas (Solution = 1)')
+g2 = sns.histplot(data = dataset[dataset["SOLUTIONS"] == 0], x = "AVG_CONSUMPTION_GAS_M3", kde=True, color = "green", ax=axes[1])
+g2.set_title('Average consumption gas (Solution = 0)')
+plt.ylim(0, 3000)
+plt.xlim(0, 50000)
+plt.show()
+'''
 
-#### COMMODITY ####
+#BEHAVIOUR SCORE
+crosstab_commodity_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["BEHAVIOUR_SCORE"], normalize='index')
+crosstab_commodity_solutions.plot.bar(figsize=(6, 4), color = ["skyblue","blue","dodgerblue"],
+                                      rot=0).set(ylabel="Count", xlabel = "Solution")
+plt.title('Solutions by Behaviour Score', fontweight="bold", fontsize =10)
+plt.show()
 
-
+#CLC STATUS
+crosstab_commodity_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
+                                    columns=dataset["CLC_STATUS"], normalize='index')
+crosstab_commodity_solutions.plot.bar(figsize=(6, 4), color = ["skyblue","orchid", "yellowgreen","blue","dodgerblue"],
+                                      rot=0).set(ylabel="Count", xlabel = "Solution")
+plt.title('Solutions by CLC Status', fontweight="bold", fontsize =10)
+plt.show()
 
 
 
