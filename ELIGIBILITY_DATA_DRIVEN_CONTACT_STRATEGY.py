@@ -3,127 +3,90 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-dataset = pd.read_csv("DLT_AI_and_DATA_CUSTOMER_BASE_EN.csv", sep=";", encoding = 'unicode_escape')
+dataset = pd.read_csv("DLT_AI_and_DATA_CUSTOMER_BASE_EN (1).csv", sep=";", encoding = 'unicode_escape')
 dataset = pd.DataFrame(dataset)
-
-###### EXPLORATORY DATA ANALYSIS #######
-
-
-#### COMMODITY ####
-
-df_start = dataset.copy()
-df_dummy_visual = pd.get_dummies(df_start["COMMODITY"])
-df_commodity_eda = pd.concat([df_start.reset_index(drop=True), df_dummy_visual.reset_index(drop=True)], axis=1)
-
-sns.countplot("DUAL", data = df_commodity_eda, palette = "hls")
-plt.title('COMMODITY_DUAL', fontweight="bold", fontsize =10)
-plt.show()
-
-
-##### SOLUTIONS #####
-
-sns.countplot("SOLUTIONS", data = dataset, palette = "hls")
-plt.title('SOLUTIONS', fontweight="bold", fontsize =10)
-plt.show()
-
-#The following graphs show the distribution of variables per solution values
-
-#COMMODITY
-crosstab_commodity_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["COMMODITY"], normalize='index')
-crosstab_commodity_solutions.plot.bar(figsize=(6, 4),
-                               rot=0).set(ylabel="Count", xlabel = "Solution")
-plt.title('Solutions by Commodity type', fontweight="bold", fontsize =10)
-plt.show()
-
-#PRIVACY
-crosstab_privacy_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["CONSENSUS_PRIVACY"], normalize='index')
-crosstab_privacy_solutions.plot.bar(figsize=(6, 4),
-                               rot=0, color=('red', 'green')).set(ylabel="Percentage", xlabel = "Solution")
-plt.title('Solutions by Privacy Consensus', fontweight="bold", fontsize =10)
-plt.show()
-
-
-#CUSTOMER SENIORITY
-crosstab_custsen_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["CUSTOMER_SENIORITY"], normalize='index')
-crosstab_custsen_solutions.plot.bar(figsize=(6, 4),
-                               rot=0, color=('hotpink', 'deeppink', 'mediumvioletred')).set(ylabel="Percentage", xlabel = "Solution")
-plt.title('Solutions by Customer Seniority', fontweight="bold", fontsize =10)
-plt.show()
-
-#GENDER
-crosstab_genre_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["GENRE"], normalize='index')
-crosstab_genre_solutions.plot.bar(figsize=(6, 4),
-                               rot=0, color=('lightcoral', 'gold')).set(ylabel="Percentage", xlabel = "Solution")
-plt.title('Solutions by Genre', fontweight="bold", fontsize =10)
-plt.show()
-
-#LOYALITY PROGRAM
-crosstab_loyalityprog_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["LOYALTY_PROGRAM"], normalize='index')
-crosstab_loyalityprog_solutions.plot.bar(figsize=(6, 4),
-                               rot=0, color=('darkorchid', 'royalblue')).set(ylabel="Percentage", xlabel = "Solution")
-plt.title('Solutions by Loyalty Program', fontweight="bold", fontsize =10)
-plt.show()
-
-#AREA
-crosstab_area_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["AREA"], normalize='index')
-crosstab_area_solutions.plot.bar(figsize=(6, 4),
-                               rot=0, color=('limegreen', 'lightcoral', 'deepskyblue', 'gold')).set(ylabel="Percentage", xlabel = "Solution")
-plt.title('Solutions by Area of Italy', fontweight="bold", fontsize =10)
-plt.show()
-
-#FLAG_BAD_CUSTOMER
-crosstab_flag_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["FLAG_BAD_CUSTOMER"], normalize='index')
-crosstab_flag_solutions.plot.bar(figsize=(6, 4),
-                               rot=0, color=('yellowgreen', 'crimson')).set(ylabel="Percentage", xlabel = "Solution")
-plt.title('Solutions by Bad Customer Flag', fontweight="bold", fontsize =10)
-plt.show()
-
-#AVG CONSUMPTION GAS and AVG CONSUMPTION POWER
-bp = sns.boxplot(data = dataset, x = "SOLUTIONS", y= "AVG_CONSUMPTION_GAS_M3", hue="SOLUTIONS")  
-bp.set_ylim([0, 200000])
-plt.show()
-
-
-'''
-f, axes = plt.subplots(1, 2, figsize=(15, 6))
-f.tight_layout()
-g1 = sns.histplot(data = dataset[dataset["SOLUTIONS"] == 1], x = "AVG_CONSUMPTION_GAS_M3", kde=True, color = "green", ax=axes[0], bins=100)
-g1.set_title('Average consumption gas (Solution = 1)')
-g2 = sns.histplot(data = dataset[dataset["SOLUTIONS"] == 0], x = "AVG_CONSUMPTION_GAS_M3", kde=True, color = "green", ax=axes[1])
-g2.set_title('Average consumption gas (Solution = 0)')
-plt.ylim(0, 3000)
-plt.xlim(0, 50000)
-plt.show()
-'''
-
-#BEHAVIOUR SCORE
-crosstab_commodity_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["BEHAVIOUR_SCORE"], normalize='index')
-crosstab_commodity_solutions.plot.bar(figsize=(6, 4), color = ["skyblue","blue","dodgerblue"],
-                                      rot=0).set(ylabel="Count", xlabel = "Solution")
-plt.title('Solutions by Behaviour Score', fontweight="bold", fontsize =10)
-plt.show()
-
-#CLC STATUS
-crosstab_commodity_solutions = pd.crosstab(index=dataset["SOLUTIONS"],
-                                    columns=dataset["CLC_STATUS"], normalize='index')
-crosstab_commodity_solutions.plot.bar(figsize=(6, 4), color = ["skyblue","orchid", "yellowgreen","blue","dodgerblue"],
-                                      rot=0).set(ylabel="Count", xlabel = "Solution")
-plt.title('Solutions by CLC Status', fontweight="bold", fontsize =10)
-plt.show()
-
-
 
 ##### Deleting risk churn and leaving
 dataset4 = dataset.drop(dataset[dataset["CLC_STATUS"] == "4-Risk churn"].index)
 dataset4 = dataset4.drop(dataset4[dataset4["CLC_STATUS"] == "5-Leaving"].index)
+
+###### EXPLORATORY DATA ANALYSIS #######
+
+#### SOLUTIONS ####
+
+'''
+#COMMODITY
+crosstab_commodity_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
+                                    columns=dataset4["COMMODITY"], normalize='index')
+crosstab_commodity_solutions.plot.bar(figsize=(6, 4),
+                               rot=0).set(ylabel="Count", xlabel = "Solution")
+plt.title('Solutions by commodity type', fontweight="bold", fontsize =10)
+plt.show()
+#PRIVACY
+crosstab_privacy_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
+                                    columns=dataset4["CONSENSUS_PRIVACY"], normalize='index')
+crosstab_privacy_solutions.plot.bar(figsize=(6, 4),
+                               rot=0, color=('red', 'green')).set(ylabel="Percentage", xlabel = "Solution")
+plt.title('Solutions by Privacy Consensus', fontweight="bold", fontsize =10)
+plt.show()
+#CUSTOMER SENIORITY
+crosstab_custsen_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
+                                    columns=dataset4["CUSTOMER_SENIORITY"], normalize='index')
+crosstab_custsen_solutions.plot.bar(figsize=(6, 4),
+                               rot=0, color=('hotpink', 'deeppink', 'mediumvioletred')).set(ylabel="Percentage", xlabel = "Solution")
+plt.title('Solutions by Customer Seniority', fontweight="bold", fontsize =10)
+plt.show()
+#GENDER
+crosstab_genre_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
+                                    columns=dataset4["GENRE"], normalize='index')
+crosstab_genre_solutions.plot.bar(figsize=(6, 4),
+                               rot=0, color=('lightcoral', 'gold')).set(ylabel="Percentage", xlabel = "Solution")
+plt.title('Solutions by Genre', fontweight="bold", fontsize =10)
+plt.show()
+#LOYALITY PROGRAM
+crosstab_loyalityprog_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
+                                    columns=dataset4["LOYALTY_PROGRAM"], normalize='index')
+crosstab_loyalityprog_solutions.plot.bar(figsize=(6, 4),
+                               rot=0, color=('darkorchid', 'royalblue')).set(ylabel="Percentage", xlabel = "Solution")
+plt.title('Solutions by Loyalty Program', fontweight="bold", fontsize =10)
+plt.show()
+#AREA
+crosstab_area_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
+                                    columns=dataset4["AREA"], normalize='index')
+crosstab_area_solutions.plot.bar(figsize=(6, 4),
+                               rot=0, color=('limegreen', 'lightcoral', 'deepskyblue', 'gold')).set(ylabel="Percentage", xlabel = "Solution")
+plt.title('Solutions by Area of Italy', fontweight="bold", fontsize =10)
+plt.show()
+#FLAG_BAD_CUSTOMER
+crosstab_flag_solutions = pd.crosstab(index=dataset4["SOLUTIONS"],
+                                    columns=dataset4["FLAG_BAD_CUSTOMER"], normalize='index')
+crosstab_flag_solutions.plot.bar(figsize=(6, 4),
+                               rot=0, color=('yellowgreen', 'crimson')).set(ylabel="Percentage", xlabel = "Solution")
+plt.title('Solutions by Bad Customer Flag', fontweight="bold", fontsize =10)
+plt.show()
+#AVG CONSUMPTION GAS and AVG CONSUMPTION POWER
+bp = sns.boxplot(data = dataset, x = "SOLUTIONS", y= "AVG_CONSUMPTION_GAS_M3", hue="SOLUTIONS")  # RUN PLOT
+bp.set_ylim([0, 200000])
+plt.show()
+#INBOUND CONTACTS LAST YEAR
+hp = sns.histplot(data=dataset, x="INBOUND_CONTACTS_LAST_YEAR")
+hp.set_xlim([0, 20])
+plt.show()
+#N MISSED PAYMENTS
+#N CAMPAIGN SENT
+#N DEM, N SMS, N TLS SOLUTION
+#BEHAVIOUR SCORE
+#CLC STATUS
+#ACQUISITION CHANNEL
+
+'''
+#### COMMODITY ####
+
+
+
+
+
+
 
 
 
@@ -163,6 +126,8 @@ dataset4 = pd.concat([dataset4.reset_index(drop=True),exp_dataset4.reset_index(d
 descr2 = dataset4.describe().T
 
 
+dataset4.columns
+
 #### dataset for dummies
 df_for_dummies = dataset4.drop(['ID', 'CONSENSUS_PRIVACY', 'DATE_LAST_VISIT_DESK','DATE_LAST_REQUEST_CC',
                           'FIRST_ACTIVATION_DATE', 'DATE_LAST_CAMPAIGN', 'SUPPLY_START_DATE', 'EMAIL_VALIDATED',
@@ -198,6 +163,16 @@ under_dual.to_csv("Logistic_dual.csv")
 
 
 
+'''
+# one hot encoding
+from sklearn.preprocessing import OrdinalEncoder
+ordinal = OrdinalEncoder()
+ohe_df = pd.DataFrame(ordinal.fit_transform(df_for_dummies), columns = df_for_dummies.columns)
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+ohe_df = pd.DataFrame(sc.fit_transform(ohe_df), columns = df_for_dummies.columns)
+'''
+
 
 ### CORRELATIONS 
 import seaborn as sn
@@ -217,13 +192,14 @@ def get_top_abs_correlations(df, n=5):
     return au_corr[0:n]
 
 print("Top Absolute Correlations")
-var_corr = get_top_abs_correlations(under_dual, 50)
-var_corr_2 = get_top_abs_correlations(under_sol, 50)
+var_corr = get_top_abs_correlations(under_sol, 50)
+var_corr_2 = get_top_abs_correlations(under_dual, 50)
 
 sol_corr = under_sol[under_sol.columns].corr(method = "spearman")['SOLUTIONS'][:]
 dual_corr = under_dual[under_dual.columns].corr(method = "spearman")['COMMODITY_DUAL'][:]
 sol_corr = pd.DataFrame(sol_corr).sort_values(by = 'SOLUTIONS', ascending=False)
 dual_corr = pd.DataFrame(dual_corr).sort_values(by = 'COMMODITY_DUAL', ascending=False)
+
 
 
 
@@ -288,609 +264,46 @@ avg_df_mean_2["difference"] = abs(avg_df_mean_2[0] - avg_df_mean_2[1])
 avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"])
 
 
-
-#FEATURE SELECTION
-#RANDOM FOREST
-
-# DUAL
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-
-
-# df_random_dual = pd.read_csv("project_deloitte/Logistic_dual.csv")
-under_dual = under_dual.drop(['N_DEM_CROSS_SELLING', 'N_SMS_CROSS_SELLING',
-                              'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
-                              'N_SMS_SOLUTION', 'N_TLS_SOLUTION'], axis=1)
-X = under_dual.iloc[:, under_dual.columns != "COMMODITY_DUAL"].values
-y = under_dual["COMMODITY_DUAL"]
-
-#train test
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
-
-#Scale
-
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
-
-# GRID SEARCH / OPTIMIZATION
-rf_final = RandomForestClassifier(random_state=0)
-param_grid = {
-    'n_estimators': [100, 500],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth': [4, 5, 6, 7, 8],
-    'criterion': ['gini', 'entropy']
-}
-CV_rfc = GridSearchCV(estimator=rf_final, param_grid=param_grid, cv=5)
-CV_rfc.fit(X_train, y_train)
-print(CV_rfc.best_params_)
-
-#MODEL
-rfc1=RandomForestClassifier(random_state=0, max_features='auto', n_estimators= 500, max_depth=7, criterion='gini')
-rfc1.fit(X_train, y_train)
-y_pred = rfc1.predict(X_test)
-
-# Evaluation metrics
-#CONFUSION MATRIX
-mat = confusion_matrix(y_test, y_pred)
-sns.heatmap(mat, square=True, annot=True, fmt='d', cbar=False)
-plt.xlabel('Predicted value')
-plt.ylabel('True value')
-plt.title("Random Forest Confusion Matrix", fontweight="bold", fontsize=12)
-plt.show()
-
-#ACCURACY
-accuracy_train = rfc1.score(X_train, y_train)
-print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
-print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
-print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
-print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
-
-#VISUALIZATION OF THE FEATURE_IMPORTANCE
-rfc1.feature_importances_
-sorted_idx = rfc1.feature_importances_.argsort()
-yaxis1 = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER',
-                                  'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER', 'N_GAS_POINTS',
-                                  'N_POWER_POINTS', 'N_DISUSED_GAS_POINTS', 'N_DISUSED_POWER_POINTS',
-                                  'N_TERMINATED_GAS_PER_SWITCH', 'N_TERMINATED_POWER_PER_SWITCH',
-                                  'N_TERMINATED_GAS_PER_VOLTURA', 'N_TERMINATED_POWER_PER_VOLTURA',
-                                  'N_RISK_CASES_CHURN_GAS', 'N_RISK_CASES_CHURN_POWER',
-                                  'N_MISSED_PAYMENTS', 'N_SWITCH_ANTI_CHURN', 'AVG_CONSUMPTION_GAS_M3',
-                                  'AVG_CONSUMPTION_POWER_KWH', 'GENRE_F', 'GENRE_M',
-                                  'COMMODITY_GAS', 'COMMODITY_POWER', 'ZONE_Abruzzo', 'ZONE_Basilicata',
-                                  'ZONE_Calabria', 'ZONE_Campania', 'ZONE_Emilia-Romagna',
-                                  'ZONE_Friuli-Venezia Giulia', 'ZONE_Lazio', 'ZONE_Liguria',
-                                  'ZONE_Lombardia', 'ZONE_Marche', 'ZONE_Molise', 'ZONE_Piemonte',
-                                  'ZONE_Puglia', 'ZONE_Sardegna', 'ZONE_Sicilia', 'ZONE_Toscana',
-                                  'ZONE_Trentino-Alto Adige', 'ZONE_Umbria',
-                                  "ZONE_Valle d'Aosta/VallÇ¸e d'Aoste", 'ZONE_Veneto', 'AREA_Center',
-                                  'AREA_North-East', 'AREA_North-West', 'AREA_South',
-                                  'CUSTOMER_SENIORITY_1-3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
-                                  'CUSTOMER_SENIORITY_>3 YEARS', 'BEHAVIOUR_SCORE_BAD PAYER',
-                                  'BEHAVIOUR_SCORE_GOOD PAYER', 'BEHAVIOUR_SCORE_LATECOMER',
-                                  'CLC_STATUS_1-New', 'CLC_STATUS_2-Customer',
-                                  'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
-                                  'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
-                                  'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
-                                  'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelityÿ',
-                                  'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
-                                  'LAST_CAMPAIGN_TIPOLOGY_Caring', 'LAST_CAMPAIGN_TIPOLOGY_Communication',
-                                  'LAST_CAMPAIGN_TIPOLOGY_Comunicazione',
-                                  'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
-                                  'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
-                                  'LAST_CAMPAIGN_TIPOLOGY_Solution'])
-
-plt.figure(figsize=(15, 15))
-sns.barplot(x=rfc1.feature_importances_[sorted_idx], y=yaxis1.columns[sorted_idx], orient="h",
-            palette="gist_rainbow")
-plt.xlabel("Random Forest Feature Importance")
-plt.title("Random Forest Features Importance DUAL", fontweight="bold", fontsize=12)
-sns.set(font_scale=0.3)
-plt.rcParams['figure.dpi'] = 300
-plt.show()
-
-#RANDOM
-#SOLUTION
-
-under_sol = under_sol.drop(['N_DEM_CROSS_SELLING', 'N_SMS_CROSS_SELLING',
-                            'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
-                            'N_SMS_SOLUTION', 'N_TLS_SOLUTION'], axis=1)
-X_sol = under_sol.iloc[:, under_sol.columns != "SOLUTIONS"].values
-y_sol = under_sol["SOLUTIONS"]
-
-#split
-X_train_s, X_test_s, y_train_s, y_test_s = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
-
-#scale
-sc = StandardScaler()
-X_train_s = sc.fit_transform(X_train_s)
-X_test_s = sc.transform(X_test_s)
-
-#GRID SEARCH
-rf_final_sol = RandomForestClassifier(0)
-param_grid = {
-    'n_estimators': [20, 500],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth': [3, 4, 5, 6, 7, 8],
-    'criterion': ['gini', 'entropy']
-}
-CV_rfc_sol = GridSearchCV(estimator=rf_final_sol, param_grid=param_grid, cv=5)
-CV_rfc_sol.fit(X_train_s, y_train_s)
-print(CV_rfc_sol.best_params_)
-
-#MODEL
-rfc2=RandomForestClassifier(random_state=0, max_features='log2', n_estimators= 20, max_depth=6, criterion='entropy')
-rfc2.fit(X_train_s, y_train_s)
-y_pred_s = rfc2.predict(X_test_s)
-
-# Evaluation metrics
-mat = confusion_matrix(y_test_s, y_pred_s)
-sns.heatmap(mat, square=True, annot=True, fmt='d', cbar=False)
-plt.xlabel('Predicted value')
-plt.ylabel('True value')
-plt.title("Random Forest Confusion Matrix", fontweight="bold", fontsize=12)
-plt.show()
-#ACCURACY
-accuracy_train = rfc2.score(X_train_s, y_train_s)
-print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
-print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test_s, y_pred_s)))
-print("Random Forest - Precision: " + str(precision_score(y_test_s, y_pred_s)))
-print("Random Forest - Recall: " + str(recall_score(y_test_s, y_pred_s)))
-
-#VISUALIZATION OF FEATURE IMPORTANCE
-rfc2.feature_importances_
-sorted_idx = rfc2.feature_importances_.argsort()
-yaxis1 = pd.DataFrame(X_sol, columns=['LOYALTY_PROGRAM', 'NEW_CUSTOMER',
-                                      'WEB_PORTAL_REGISTRATION', 'FLAG_BAD_CUSTOMER', 'N_GAS_POINTS',
-                                      'N_POWER_POINTS', 'N_DISUSED_GAS_POINTS', 'N_DISUSED_POWER_POINTS',
-                                      'N_TERMINATED_GAS_PER_SWITCH', 'N_TERMINATED_POWER_PER_SWITCH',
-                                      'N_TERMINATED_GAS_PER_VOLTURA', 'N_TERMINATED_POWER_PER_VOLTURA',
-                                      'N_RISK_CASES_CHURN_GAS', 'N_RISK_CASES_CHURN_POWER',
-                                      'N_MISSED_PAYMENTS', 'N_SWITCH_ANTI_CHURN', 'AVG_CONSUMPTION_GAS_M3',
-                                      'AVG_CONSUMPTION_POWER_KWH', 'GENRE_F', 'GENRE_M', 'COMMODITY_DUAL',
-                                      'COMMODITY_GAS', 'COMMODITY_POWER', 'ZONE_Abruzzo', 'ZONE_Basilicata',
-                                      'ZONE_Calabria', 'ZONE_Campania', 'ZONE_Emilia-Romagna',
-                                      'ZONE_Friuli-Venezia Giulia', 'ZONE_Lazio', 'ZONE_Liguria',
-                                      'ZONE_Lombardia', 'ZONE_Marche', 'ZONE_Molise', 'ZONE_Piemonte',
-                                      'ZONE_Puglia', 'ZONE_Sardegna', 'ZONE_Sicilia', 'ZONE_Toscana',
-                                      'ZONE_Trentino-Alto Adige', 'ZONE_Umbria',
-                                      "ZONE_Valle d'Aosta/VallÇ¸e d'Aoste", 'ZONE_Veneto', 'AREA_Center',
-                                      'AREA_North-East', 'AREA_North-West', 'AREA_South',
-                                      'CUSTOMER_SENIORITY_1-3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
-                                      'CUSTOMER_SENIORITY_>3 YEARS', 'BEHAVIOUR_SCORE_BAD PAYER',
-                                      'BEHAVIOUR_SCORE_GOOD PAYER', 'BEHAVIOUR_SCORE_LATECOMER',
-                                      'CLC_STATUS_1-New', 'CLC_STATUS_2-Customer',
-                                      'CLC_STATUS_3-Customer Loyalty', 'ACQUISITION_CHANNEL_Agency',
-                                      'ACQUISITION_CHANNEL_CC', 'ACQUISITION_CHANNEL_Desk',
-                                      'ACQUISITION_CHANNEL_Teleselling', 'ACQUISITION_CHANNEL_WEB',
-                                      'LAST_GAS_PRODUCT_Digital', 'LAST_GAS_PRODUCT_Fidelityÿ',
-                                      'LAST_GAS_PRODUCT_Green', 'LAST_GAS_PRODUCT_Traditional',
-                                      'LAST_CAMPAIGN_TIPOLOGY_Caring', 'LAST_CAMPAIGN_TIPOLOGY_Communication',
-                                      'LAST_CAMPAIGN_TIPOLOGY_Comunicazione',
-                                      'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
-                                      'LAST_CAMPAIGN_TIPOLOGY_Renewal', 'LAST_CAMPAIGN_TIPOLOGY_Rinnovo',
-                                      'LAST_CAMPAIGN_TIPOLOGY_Solution'])
-
-plt.figure(figsize=(20, 20))
-sns.barplot(x=rfc2.feature_importances_[sorted_idx], y=yaxis1.columns[sorted_idx], orient="h",
-            palette="gist_rainbow")
-plt.xlabel("Random Forest Feature Importance")
-plt.title("Random Forest Features Importance SOLUTIONS", fontweight="bold", fontsize=12)
-sns.set(font_scale=0.3)
-plt.rcParams['figure.dpi'] = 300
-plt.show()
-
-
 #FEAUTURE SELECTED FOR RECCOMENDATION
 
 recommend_sol = dummy_df.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION', 
                                  'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO', 
                                  'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
                                  'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
-                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER" ], axis=1)
+                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER", 'SOLUTIONS' ], axis=1)
+
+recommend_sol = pd.concat([recommend_sol,dataset4["ID"]], axis = 1)
+recommend_sol = recommend_sol.dropna()
+recommend_sol_1 = recommend_sol.loc[recommend_sol['SOLUTIONS'] == 1]
+recommend_sol_0 = recommend_sol.loc[recommend_sol['SOLUTIONS'] == 0]
+
+#recommend_sol_0 = recommend_sol_0.set_index(recommend_sol_0["ID"])
+recommend_sol_1 = recommend_sol_1.drop(["ID"], axis = 1)
+recommend_sol_0 = recommend_sol_0.drop(["ID"], axis = 1)
+recommend_sol_1_mean = recommend_sol_1.mean()
+recommend_sol_1_mean = pd.DataFrame(recommend_sol_1_mean).T
+recommend_sol_1_mean = pd.DataFrame(np.repeat(recommend_sol_1_mean.values, 60048, axis=0), columns=recommend_sol_1_mean.columns)    
+distances = recommend_sol_0.subtract(recommend_sol_1_mean)
+distances = distances.abs()
+distances['sum'] = distances[list(distances.columns)].sum(axis=1)
+distances = distances.set_index(dataset4["ID"])
+distances = distances.sort_values("sum")
+distances = distances.dropna()
 
 recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West',
                                  'WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
                                  'N_DISUSED_GAS_POINTS', 
                                  'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
                                  'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3' 
-                                 'LAST_GAS_PRODUCT_Traditional', "COMMODITY_DUAL"], axis=1)
+                                 'LAST_GAS_PRODUCT_Traditional', 'SOLUTIONS'], axis=1)
 
+#get_top_abs_correlations(recommend_dual, 50)
 
+#dummy_df.columns
 
-
-#PROPENSITY 
-
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-
-#dataset = pd.read_csv("dataset4.csv", sep=",", index_col=0)
-#dummy_df = pd.read_csv("dummy_df.csv", sep=",", index_col=0)
-
-#creo dataset con le features di dataset4 + quelle di dummy_df senza sovrapposizioni
-different_cols = dummy_df.columns.difference(dataset4.columns)
-dataset_difference = dummy_df[different_cols]
-
-dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
-                     right_index=True, how='inner')
-
-#Seleziono le variabili + quelle che servono per fare sciegliere gli elegible
-dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
-                                     'N_DISUSED_GAS_POINTS', 
-                                     'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
-                                     'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3','LAST_GAS_PRODUCT_Traditional',
-                                     "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)
-
-
-#DUAL
-def non_elegible(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
-    return df
-dataset_non_elegible = non_elegible(dataset_dual)
-dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
-
-def elegible(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
-    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
-    return df
-dataset_elegible = elegible(dataset_dual)
-dataset_elegible = dataset_elegible.dropna(axis=0)
-
-#creo dataset bilanciato random
-class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
-c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
-c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
-df_2 = c2.sample(class_1)
-under_dual = pd.concat([df_2, c1], axis=0)
-
-X = under_dual.iloc[:, :-5].values
-y = under_dual["COMMODITY_DUAL"]
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-
-#SCALE
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
-
-#RANDOMFOREST
-#GRIDSEARCH
-classifier = RandomForestClassifier(random_state = 0)
-param_grid = {
-    'n_estimators': [90,95,100,105,110],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth': [4, 5, 6, 7, 8,9,10],
-    'criterion': ['gini', 'entropy']
-}
-CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
-CV_rfc.fit(X_train, y_train)
-print(CV_rfc.best_params_)
-
-#MODEL
-rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=100,
-                              max_depth=8, criterion='gini')
-rfc1.fit(X_train, y_train)
-y_pred = rfc1.predict(X_test)
-
-accuracy_train = rfc1.score(X_train, y_train)
-print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
-print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
-print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
-print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
-
-X_pred = dataset_elegible.iloc[:, :-5].values
-X_pred = sc.transform(X_pred)
-predicted = rfc1.predict_proba(X_pred)
-predicted = pd.DataFrame(predicted)
-predicted = predicted[predicted[1] > 0.5]
-
-#LOGISTIC
-from sklearn.linear_model import LogisticRegression
-logreg = LogisticRegression()
-logreg.fit(X_train, y_train.values.ravel())
-y_pred_log = logreg.predict(X_test)
-print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(X_test, y_test)))
-print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_log)))
-print("Random Forest - Precision: " + str(precision_score(y_test, y_pred_log)))
-print("Random Forest - Recall: " + str(recall_score(y_test, y_pred_log)))
-
-cfm = confusion_matrix(y_test,y_pred)
-print(cfm)
-
-#PREDICTION OF THE LOGISTIC
-pred_dual_log = logreg.predict_proba(X_pred)
-pred_dual_log = pd.DataFrame(pred_dual_log)
-pred_dual_log['ID']= dataset_elegible['ID'].values
-pred_dual_log = pred_dual_log[pred_dual_log[1] > 0.2]
-
-
-#SVM
-from sklearn.svm import SVC
-#GRID
-modelsvr = SVC()
-param = {'kernel' : ('linear', 'poly', 'rbf', 'sigmoid'),'C' : [1,5,10],'degree' : [3,8],'coef0' : [0.01,10,0.5],'gamma' : ('auto','scale')}
-CV_svm = GridSearchCV(estimator=modelsvr, param_grid=param, cv=5)
-CV_svm.fit(X_train, y_train)
-print(CV_svm.best_params_)
-
-svm_model = SVC(C=1, coef0=0.01, degree=3, gamma='auto', kernel='rbf')
-svm_model.fit(X_train, y_train)
-y_pred_svm = svm_model.predict(X_test)
-
-accuracy_train = svm_model.score(X_train, y_train)
-print("Accuracy on the training set: " + str(accuracy_train))
-print("Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_svm)))
-print("Precision: " + str(precision_score(y_test, y_pred_svm)))
-print("Recall: " + str(recall_score(y_test, y_pred_svm)))
-
-#CALIBRATION
-svm = SVC(C=1, coef0=0.01, degree=3, gamma='auto', kernel='rbf')
-clf = CalibratedClassifierCV(svm_model, cv=3) 
-clf.fit(X_train, y_train)
-y_proba = clf.predict_proba(X_test)
-
-#PREDICTION
-pred_dual_svm = clf.predict_proba(X_pred)
-pred_dual_svm = pd.DataFrame(pred_dual_svm)
-pred_dual_svm['ID']= dataset_elegible['ID'].values
-pred_dual_svm = pred_dual_svm[pred_dual_svm[1]>0.2]
-
-
-#### KNN
-from sklearn.neighbors import KNeighborsClassifier
-
-#TUNING
-from sklearn.model_selection import GridSearchCV
-model = KNeighborsClassifier()
-param_grid = {'n_neighbors': [K for K in range(1,25)]}
-CV_knn = GridSearchCV(estimator=model, param_grid=param_grid, cv=5)
-CV_knn.fit(X_train_dual, y_train_dual)
-print(CV_knn.best_params_)
-
-#MODEL
-knn_model_dual = KNeighborsClassifier(n_neighbors = 19)
-knn_model_dual.fit(X_train_dual, y_train_dual)
-y_pred_knn_dual =knn_model_dual.predict(X_test_dual)
-
-'''
-# Evaluation metrics
-accuracy_train = knn_model_dual.score(X_train_dual, y_train_dual)
-print("KNN - Accuracy on the training set: " + str(accuracy_train))
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test_dual, y_pred_knn_dual)))
-print("KNN - Precision: " + str(precision_score(y_test_dual, y_pred_knn_dual)))
-print("KNN - Recall: " + str(recall_score(y_test_dual,y_pred_knn_dual)))
-'''
-
-
-#CALIBRATION
-from sklearn.calibration import CalibratedClassifierCV
-calib_clf_dual = CalibratedClassifierCV(knn_model_dual, cv=3, method='sigmoid')
-calib_clf_dual.fit(X_train_dual, y_train_dual)
-y_calibprob_dual = calib_clf_dual.predict_proba(X_test_dual)
-y_calibprob_dual = pd.DataFrame(y_calibprob_dual)
-y_test_dual = pd.DataFrame(y_test_dual)
-
-#PREDICTION ON THE Y_TEST_SOL
-predicted_knn_dual = pd.concat([y_calibprob_dual.reset_index(drop=True),y_test_dual.reset_index(drop=True)], axis=1)
-predicted_knn_dual['predicted'] = np.where(predicted_knn_dual[0]>= 0.5, 0,1)
-
-confusion_matrix_dual = pd.crosstab(predicted_knn_dual['COMMODITY_DUAL'], predicted_knn_dual['predicted'], rownames=['Actual'], colnames=['Predicted'])
-print(confusion_matrix_dual)
-
-print("KNN for dual - Accuracy: " + str((448+483)/1083))
-print("KNN for dual - Precision: " + str((483)/(104+483)))
-print("KNN for dual - Recall: " + str((483)/(483+48)))
-
-
-
-#PREDICTION ON THE ELEGIBLES
-X_pred_dual = dataset_elegible.iloc[:,:-5]
-X_pred_dual = sc.transform(X_pred_dual)
-pred_dual = calib_clf_dual.predict_proba(X_pred_dual)
-pred_dual = pd.DataFrame(pred_dual)
-ID_column = dataset_elegible["ID"]
-pred_dual = pd.concat([pred_dual, ID_column.reset_index(drop=True)], axis = 1)
-pred_dual = pred_dual[pred_dual[1]>0.5]
-
-
-
-
-
-
-################################################
-
-#SOLUTION
-def non_elegible_sol(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["SOLUTIONS"] == 0)].index)
-    return df
-def elegible_sol(df):
-    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["SOLUTIONS"] == 1)].index)
-    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
-    return df
-
-dataset_sol = dataset_whole.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION', 
-                                 'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO', 
-                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
-                                 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
-                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER", "CONSENSUS_PRIVACY", "ID" 
-                                 ,"PHONE_VALIDATED", "EMAIL_VALIDATED", "SOLUTIONS"], axis=1)
-
-dataset_elegib_sol = elegible_sol(dataset_sol)
-dataset_non_elegib_sol = non_elegible_sol(dataset_sol)
-dataset_elegib_sol.dropna(axis=0, inplace=True)
-dataset_non_elegib_sol.dropna(axis=0, inplace=True)
-
-class_2, class_1 = dataset_non_elegib_sol.SOLUTIONS.value_counts()
-c2 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 0]
-c1 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 1]
-df_3 = c2.sample(class_1)
-under_sol = pd.concat([df_3, c1], axis=0)
-
-X_sol = under_sol.iloc[:, :-5].values
-y_sol = under_sol["SOLUTIONS"]
-
-X_train_sol, X_test_sol, y_train_sol, y_test_sol = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
-#SCALE
-sc = StandardScaler()
-X_train_sol = sc.fit_transform(X_train_sol)
-X_test_sol = sc.transform(X_test_sol)
-
-##RANDOMFOREST
-classifier = RandomForestClassifier(random_state = 0)
-param_grid = {
-    'n_estimators': [90,95,100,105,110],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth': [4, 5, 6, 7, 8,9,10],
-    'criterion': ['gini', 'entropy']
-}
-CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
-CV_rfc.fit(X_train_sol, y_train_sol)
-print(CV_rfc.best_params_)
-rfc2 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=105,
-                              max_depth=4, criterion='gini')
-rfc2.fit(X_train_sol, y_train_sol)
-y_pred_sol = rfc2.predict(X_test_sol)
-accuracy_train = rfc2.score(X_train_sol, y_train_sol)
-print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
-print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_sol)))
-print("Random Forest - Precision: " + str(precision_score(y_test_sol, y_pred_sol)))
-print("Random Forest - Recall: " + str(recall_score(y_test_sol, y_pred_sol)))
-
-#PREDICTION ON THE ELEGIBLES
-X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
-X_pred_sol = sc.transform(X_pred_sol)
-predicted_sol = rfc2.predict_proba(X_pred_sol)
-predicted_sol = pd.DataFrame(predicted_sol)
-predicted_sol = predicted_sol[predicted_sol[1] > 0.4]
-
-#SVM##########
-#GRIDSEARCH
-modelsvr = SVC()
-param = {'kernel' : ('linear', 'poly', 'rbf', 'sigmoid'),'C' : [1,5,10],'degree' : [3,8],'coef0' : [0.01,10,0.5],'gamma' : ('auto','scale')}
-CV_svm = GridSearchCV(estimator=modelsvr, param_grid=param, cv=5)
-CV_svm.fit(X_train_sol, y_train_sol)
-print(CV_svm.best_params_)
-#model
-svm_model = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
-svm_model.fit(X_train_sol, y_train_sol)
-y_pred_svm = svm_model.predict(X_test_sol)
-accuracy_train = svm_model.score(X_train_sol, y_train_sol)
-
-#ACCURACY
-print(accuracy_train)
-print("Accuracy on the training set: " + str(accuracy_train))
-print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_svm)))
-print("Precision: " + str(precision_score(y_test_sol, y_pred_svm)))
-print("Recall: " + str(recall_score(y_test_sol, y_pred_svm)))
-
-#CALIBRATION
-svm = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
-clf = CalibratedClassifierCV(svm_model, cv=3) 
-clf.fit(X_train_sol, y_train_sol)
-y_proba = clf.predict_proba(X_test_sol)
-y_proba = pd.DataFrame(y_proba)
-y_test_sol = pd.DataFrame(y_test_sol)
-
-#PREDICTION ON THE Y_TEST_SOL
-predicted_svm = pd.concat([y_proba.reset_index(drop=True),y_test_sol.reset_index(drop=True)], axis=1)
-predicted_svm['predicted'] = np.where(predicted_svm[0]>= 0.5, 0,1)
-confusion_matrix = pd.crosstab(predicted_svm['SOLUTIONS'], predicted_svm['predicted'], rownames=['Actual'], colnames=['Predicted'])
-print(confusion_matrix)
-
-#PREDICTION ON THE ELEGIBLES
-X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
-X_pred_sol = sc.transform(X_pred_sol)
-pred_solution = clf.predict_proba(X_pred_sol)
-pred_solution = pd.DataFrame(pred_solution)
-pred_solution = pred_solution[pred_solution[1]>0.5]
-
-#LOGISTIC
-mod_log_sol = LogisticRegression()
-mod_log_sol.fit(X_train_sol, y_train_sol.values.ravel())
-mod_pred_log = mod_log_sol.predict(X_test_sol)
-
-print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, mod_pred_log)))
-print("Precision: " + str(precision_score(y_test_sol, mod_pred_log)))
-print("Recall: " + str(recall_score(y_test_sol, mod_pred_log)))
-
-pred_solution_log = mod_log_sol.predict_proba(X_pred_sol)
-pred_solution_log = pd.DataFrame(pred_solution_log)
-pred_solution_log['ID']= dataset_elegib_sol['ID'].values
-
-
-#KNN
-from sklearn.neighbors import KNeighborsClassifier
-
-#TUNING
-from sklearn.model_selection import GridSearchCV
-model = KNeighborsClassifier()
-param_grid = {'n_neighbors': [K for K in range(3,17)]}
-CV_knn = GridSearchCV(estimator=model, param_grid=param_grid, cv=5)
-CV_knn.fit(X_train_sol, y_train_sol)
-print(CV_knn.best_params_)
-
-#MODEL
-knn_model_sol = KNeighborsClassifier(n_neighbors = 9)
-knn_model_sol.fit(X_train_sol, y_train_sol)
-y_pred_knn_sol =knn_model_sol.predict(X_test_sol)
-
-'''
-# Evaluation metrics
-accuracy_train = knn_model_sol.score(X_train_sol, y_train_sol)
-print("KNN - Accuracy on the training set: " + str(accuracy_train))
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_knn_sol)))
-print("KNN - Precision: " + str(precision_score(y_test_sol, y_pred_knn_sol)))
-print("KNN - Recall: " + str(recall_score(y_test_sol,y_pred_knn_sol)))
-'''
-
-#CALIBRATION
-from sklearn.calibration import CalibratedClassifierCV
-calib_clf_sol = CalibratedClassifierCV(knn_model_sol, cv=3, method='sigmoid')
-calib_clf_sol.fit(X_train_sol, y_train_sol)
-y_calibprob_sol = calib_clf_sol.predict_proba(X_test_sol)
-y_calibprob_sol = pd.DataFrame(y_calibprob_sol)
-y_test_sol = pd.DataFrame(y_test_sol)
-
-#PREDICTION ON THE Y_TEST_SOL
-predicted_knn_sol = pd.concat([y_calibprob_sol.reset_index(drop=True),y_test_sol.reset_index(drop=True)], axis=1)
-predicted_knn_sol['predicted'] = np.where(predicted_knn_sol[0]>= 0.5, 0,1)
-
-confusion_matrix_sol = pd.crosstab(predicted_knn_sol['SOLUTIONS'], predicted_knn_sol['predicted'], rownames=['Actual'], colnames=['Predicted'])
-print(confusion_matrix_sol)
-
-print("KNN for solutions - Accuracy: " + str((36+32)/105))
-print("KNN for solutions - Precision: " + str((32)/(32+18)))
-print("KNN for solutions - Recall: " + str((32)/(32+19)))
-
-
-#PREDICTION ON THE ELEGIBLES
-X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
-X_pred_sol = sc.transform(X_pred_sol)
-pred_sol = calib_clf_sol.predict_proba(X_pred_sol)
-pred_sol = pd.DataFrame(pred_sol)
-ID_column = dataset_elegib_sol["ID"]
-pred_sol = pd.concat([pred_sol, ID_column.reset_index(drop=True)], axis = 1)
-pred_sol = pred_sol[pred_sol[1]>0.5]
-
-
-
-
-#############################################################
 
 #ELIGIBILITY
+
 column_names = ["ID", "Month_1", "Month_2", "Month_3", "Month_4", "Month_5", "Month_6",
                 "Month_7", "Month_8", "Month_9", "Month_10", "Month_11", "Month_12"]
 Cross_Selling_DEM = pd.DataFrame(columns=column_names)
@@ -942,6 +355,7 @@ solution_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >
 solution_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0)]
 solution_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
 
+'''
 #CROSS SELLING
 for index, row in cross_selling_dem_general.iterrows():
     l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
@@ -985,8 +399,332 @@ for index, row in solution_tls_general.iterrows():
     elif row["COMMODITY"] != "DUAL":
         m = [row["ID"],0,1,0,0,0,0,0,0,0,0,0,0]
         Cross_Selling_TLS.loc[len(Solution_TLS)] = m
+'''
 
-       
+different_cols = dummy_df.columns.difference(dataset4.columns)
+dataset_difference = dummy_df[different_cols]
+
+dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
+                     right_index=True, how='inner')
+
+dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
+                                     'N_DISUSED_GAS_POINTS', 
+                                     'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
+                                     'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3','LAST_GAS_PRODUCT_Traditional',
+                                     "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)
+
+### DUAL PROPENSITY ###
+def non_elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
+    return df
+dataset_non_elegible = non_elegible(dataset_dual)
+dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
+
+def elegible(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+dataset_elegible = elegible(dataset_dual)
+dataset_elegible = dataset_elegible.dropna(axis=0)
+
+class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
+c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
+c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
+import random
+random.seed(1234)
+df_2 = c2.sample(class_1)
+under_dual = pd.concat([df_2, c1], axis=0)
     
+#under_dual.to_csv("under_dual.csv")
+#dataset_elegible.to_csv("dataset_elegible.csv")
+    
+#Random Forest
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+import numpy as np
+X = under_dual.iloc[:, :-5].values
+y = under_dual["COMMODITY_DUAL"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=100,
+                              max_depth=8, criterion='gini')
+rfc1.fit(X_train, y_train)
+y_pred = rfc1.predict(X_test)
+
+accuracy_train = rfc1.score(X_train, y_train)
+print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
+print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
+print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
+
+X_pred = dataset_elegible.iloc[:, :-5].values
+X_pred = sc.transform(X_pred)
+predicted = rfc1.predict_proba(X_pred)
+predicted = pd.DataFrame(predicted)
+predicted['RANDOM PREDICTION'] = np.where(predicted[0] >= 0.5, 0, 1)
+#dataset_elegible['RANDOM PREDICTION'] = predicted['RANDOM PREDICTION'].values
+
+ensemble = pd.DataFrame(y_test)
+ensemble['RANDOM PREDICTION'] = pd.Series(y_pred).values
+
+
+#KNN
+from sklearn.neighbors import KNeighborsClassifier
+
+'''
+X = under_dual.iloc[:, :-5].values
+y = under_dual["COMMODITY_DUAL"]
+X_train, X_test, y_train_dual, y_test_dual = train_test_split(X, y, test_size=0.3, random_state=0)
+sc = StandardScaler()
+X_train_dual = sc.fit_transform(X_train)
+X_test_dual = sc.transform(X_test)
+'''
+
+knn_model_dual = KNeighborsClassifier(n_neighbors = 19)
+knn_model_dual.fit(X_train, y_train)
+y_pred_knn_dual =knn_model_dual.predict(X_test)
+
+# Evaluation metrics
+accuracy_train = knn_model_dual.score(X_train, y_train)
+print("KNN - Accuracy on the training set: " + str(accuracy_train))
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_knn_dual)))
+print("KNN - Precision: " + str(precision_score(y_test, y_pred_knn_dual)))
+print("KNN - Recall: " + str(recall_score(y_test,y_pred_knn_dual)))
+
+from sklearn.calibration import CalibratedClassifierCV
+calib_clf_dual = CalibratedClassifierCV(knn_model_dual, cv=3, method='sigmoid')
+calib_clf_dual.fit(X_train, y_train)
+y_calibprob_dual = calib_clf_dual.predict_proba(X_test)
+y_calibprob_dual = pd.DataFrame(y_calibprob_dual)
+y_test_dual = pd.DataFrame(y_test)
+
+predicted_knn_dual = pd.concat([y_calibprob_dual.reset_index(drop=True),y_test_dual.reset_index(drop=True)], axis=1)
+predicted_knn_dual['predicted'] = np.where(predicted_knn_dual[0]>= 0.5, 0,1)
+
+confusion_matrix_dual = pd.crosstab(predicted_knn_dual['COMMODITY_DUAL'], predicted_knn_dual['predicted'], rownames=['Actual'], colnames=['Predicted'])
+print(confusion_matrix_dual)
+
+'''
+X_pred_dual = dataset_elegible.iloc[:,:-5]
+X_pred_dual = sc.transform(X_pred_dual)
+'''
+
+pred_dual = calib_clf_dual.predict_proba(X_pred)
+pred_dual = pd.DataFrame(pred_dual)
+ID_column = dataset_elegible["ID"]
+pred_dual = pd.concat([pred_dual, ID_column.reset_index(drop=True)], axis = 1)
+
+pred_dual['KNN PREDICTION'] = np.where(pred_dual[0] >= 0.5, 0, 1)
+#dataset_elegible['KNN PREDICTION'] = pred_dual['KNN PREDICTION'].values
+
+ensemble['KNN PREDICTION'] = predicted_knn_dual['predicted'].values
+
+
+#SVM
+from sklearn.svm import SVC
+svm_model = SVC(C=1, coef0=0.01, degree=3, gamma='auto', kernel='rbf')
+svm_model.fit(X_train, y_train)
+y_pred_svm = svm_model.predict(X_test)
+
+clf = CalibratedClassifierCV(svm_model, cv=3) 
+clf.fit(X_train, y_train)
+y_proba = clf.predict_proba(X_test)
+y_proba = pd.DataFrame(y_proba)
+y_proba['SVM PREDICTION'] = np.where(y_proba[0] >= 0.5, 0, 1)
+
+accuracy_train = svm_model.score(X_train, y_train)
+print("Accuracy on the training set: " + str(accuracy_train))
+print("Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_svm)))
+print("Precision: " + str(precision_score(y_test, y_pred_svm)))
+print("Recall: " + str(recall_score(y_test, y_pred_svm)))
+
+pred_dual_svm = clf.predict_proba(X_pred)
+pred_dual_svm = pd.DataFrame(pred_dual_svm)
+pred_dual_svm['ID']= dataset_elegible['ID'].values
+#pred_dual_svm = pred_dual_svm[pred_dual_svm[1]>0.2]
+
+pred_dual_svm['SVM PREDICTION'] = np.where(pred_dual_svm[0] >= 0.5, 0, 1)
+#dataset_elegible['SVM PREDICTION'] = pred_dual_svm['SVM PREDICTION'].values
+
+ensemble['SVM PREDICTION'] = y_proba['SVM PREDICTION'].values
+
+
+#Logistic Regression
+from sklearn.linear_model import LogisticRegression
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train.values.ravel())
+y_pred_log = logreg.predict(X_test)
+y_pred_log = pd.DataFrame(y_pred_log)
+
+print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(X_test, y_test)))
+print("Logistic Regression - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_log)))
+print("Logistic Regression - Precision: " + str(precision_score(y_test, y_pred_log)))
+print("Logistic Regression - Recall: " + str(recall_score(y_test, y_pred_log)))
+
+ensemble['LOG PREDICTION'] = y_pred_log[0].values
+
+pred_dual_log = logreg.predict_proba(X_pred)
+pred_dual_log = pd.DataFrame(pred_dual_log)
+pred_dual_log['ID']= dataset_elegible['ID'].values
+#pred_dual_log = pred_dual_log[pred_dual_log[1] > 0.2]
+pred_dual_log['LOG PREDICTION'] = np.where(pred_dual_log[0] >= 0.5, 0, 1)
+#dataset_elegible['LOG PREDICTION'] = pred_dual_log['LOG PREDICTION'].values
+
+
+#Ensemble method
+from sklearn.metrics import confusion_matrix
+ensemble['SUM'] = ensemble['RANDOM PREDICTION'] + ensemble['KNN PREDICTION'] + ensemble['SVM PREDICTION'] + ensemble['LOG PREDICTION']
+ensemble['ENSEMBLE PREDICTION'] = np.where(ensemble['SUM'] >=2, 1, 0)
+pd.crosstab(ensemble['COMMODITY_DUAL'], ensemble['ENSEMBLE PREDICTION'])
+
+(520+445)/(520+445+107+11)
+520/(520+107)
+520/(520+11)
+
+metrics = {'accuracy': [0.8919667590027701, 0.866112650046168, 0.8910433979686058, 0.8919667590027701, 0.8910433979686058], 'precision': [0.8349514563106796, 0.8177496038034865, 0.8314606741573034, 0.8306709265175719, 0.8293460925039873], 'recall': [0.9717514124293786, 0.943502824858757, 0.975517890772128, 0.9792843691148776, 0.9792843691148776]}
+metrics_dual = pd.DataFrame.from_dict(metrics)
+metrics_dual = metrics_dual.set_axis(['Random Forest', 'KNN', 'SVM', 'Log Regression', "Ensemble"])
+metrics_dual
+
+
+
+
+### SOLUTION PROPENSITY ###
+def non_elegible_sol(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["SOLUTIONS"] == 0)].index)
+    return df
+def elegible_sol(df):
+    df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["SOLUTIONS"] == 1)].index)
+    df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
+    return df
+
+dataset_sol = dataset_whole.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION', 
+                                 'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO', 
+                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
+                                 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
+                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER", "CONSENSUS_PRIVACY", "ID" 
+                                 ,"PHONE_VALIDATED", "EMAIL_VALIDATED", "SOLUTIONS"], axis=1)
+
+dataset_elegib_sol = elegible_sol(dataset_sol)
+dataset_non_elegib_sol = non_elegible_sol(dataset_sol)
+dataset_elegib_sol.dropna(axis=0, inplace=True)
+dataset_non_elegib_sol.dropna(axis=0, inplace=True)
+
+class_2, class_1 = dataset_non_elegib_sol.SOLUTIONS.value_counts()
+c2 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 0]
+c1 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 1]
+df_3 = c2.sample(class_1)
+under_sol = pd.concat([df_3, c1], axis=0)
+
+X_sol = under_sol.iloc[:, :-5].values
+y_sol = under_sol["SOLUTIONS"]
+
+#under_sol.to_csv("under_sol.csv")
+#dataset_elegib_sol.to_csv("dataset_elegib_sol.csv")
+
+X_train_sol, X_test_sol, y_train_sol, y_test_sol = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
+sc = StandardScaler()
+X_train_sol = sc.fit_transform(X_train_sol)
+X_test_sol = sc.transform(X_test_sol)
+
+#Random Forest
+rfc2 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=105,
+                              max_depth=4, criterion='gini')
+rfc2.fit(X_train_sol, y_train_sol)
+y_pred_sol = rfc2.predict(X_test_sol)
+y_pred_sol = pd.DataFrame(y_pred_sol)
+
+accuracy_train = rfc2.score(X_train_sol, y_train_sol)
+print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
+print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_sol)))
+print("Random Forest - Precision: " + str(precision_score(y_test_sol, y_pred_sol)))
+print("Random Forest - Recall: " + str(recall_score(y_test_sol, y_pred_sol)))
+
+ensemble_sol = pd.DataFrame(y_test_sol)
+ensemble_sol['RANDOM PREDICTION'] = y_pred_sol[0].values
+
+
+#SVM
+svm_model = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
+svm_model.fit(X_train_sol, y_train_sol)
+y_pred_svm = svm_model.predict(X_test_sol)
+
+accuracy_train = svm_model.score(X_train_sol, y_train_sol)
+print("Accuracy on the training set: " + str(accuracy_train))
+print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_svm)))
+print("Precision: " + str(precision_score(y_test_sol, y_pred_svm)))
+print("Recall: " + str(recall_score(y_test_sol, y_pred_svm)))
+
+svm = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
+clf = CalibratedClassifierCV(svm_model, cv=3) 
+clf.fit(X_train_sol, y_train_sol)
+y_proba_sol = clf.predict_proba(X_test_sol)
+y_proba_sol = pd.DataFrame(y_proba_sol)
+y_test_sol = pd.DataFrame(y_test_sol)
+y_proba_sol['SVM PREDICTION'] = np.where(y_proba_sol[0] >= 0.5, 0, 1)
+ensemble_sol['SVM PREDICTION'] = y_proba_sol['SVM PREDICTION'].values
+
+
+#Logistic Regression
+mod_log_sol = LogisticRegression()
+mod_log_sol.fit(X_train_sol, y_train_sol.values.ravel())
+mod_pred_log = mod_log_sol.predict(X_test_sol)
+
+print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, mod_pred_log)))
+print("Precision: " + str(precision_score(y_test_sol, mod_pred_log)))
+print("Recall: " + str(recall_score(y_test_sol, mod_pred_log)))
+
+
+mod_pred_log = pd.DataFrame(mod_pred_log)
+ensemble_sol['LOG PREDICTION'] = mod_pred_log[0].values
+
+#KNN
+knn_model_sol = KNeighborsClassifier(n_neighbors = 9)
+knn_model_sol.fit(X_train_sol, y_train_sol)
+y_pred_knn_sol =knn_model_sol.predict(X_test_sol)
+
+accuracy_train = knn_model_sol.score(X_train_sol, y_train_sol)
+print("KNN - Accuracy on the training set: " + str(accuracy_train))
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_knn_sol)))
+print("KNN - Precision: " + str(precision_score(y_test_sol, y_pred_knn_sol)))
+print("KNN - Recall: " + str(recall_score(y_test_sol,y_pred_knn_sol)))
+
+from sklearn.calibration import CalibratedClassifierCV
+calib_clf_sol = CalibratedClassifierCV(knn_model_sol, cv=3, method='sigmoid')
+calib_clf_sol.fit(X_train_sol, y_train_sol)
+y_calibprob_sol = calib_clf_sol.predict_proba(X_test_sol)
+y_calibprob_sol = pd.DataFrame(y_calibprob_sol)
+y_test_sol = pd.DataFrame(y_test_sol)
+
+predicted_knn_sol = pd.concat([y_calibprob_sol.reset_index(drop=True),y_test_sol.reset_index(drop=True)], axis=1)
+predicted_knn_sol['predicted'] = np.where(predicted_knn_sol[0]>= 0.5, 0,1)
+
+ensemble_sol['KNN PREDICTION'] = predicted_knn_sol['predicted'].values
+
+
+#Ensemble method
+ensemble_sol['SUM'] = ensemble_sol['RANDOM PREDICTION'] + ensemble_sol['KNN PREDICTION'] + ensemble_sol['SVM PREDICTION'] + ensemble_sol['LOG PREDICTION']
+ensemble_sol['ENSEMBLE PREDICTION'] = np.where(ensemble_sol['SUM'] >=2, 1, 0)
+pd.crosstab(ensemble_sol['SOLUTIONS'], ensemble_sol['ENSEMBLE PREDICTION'])
+
+(37+36)/(37+36+17+15)
+36/(36+17)
+36/(36+15)
+
+
+metrics_sol = {'accuracy': [0.6857142857142857, 0.6761904761904762, 0.6857142857142857, 0.6571428571428571, 0.6952380952380952], 'precision': [0.725, 0.6808510638297872, 0.6730769230769231, 0.6530612244897959, 0.6792452830188679], 'recall': [0.5686274509803921, 0.6274509803921569, 0.6862745098039216, 0.6274509803921569, 0.7058823529411765]}
+metrics_sol = pd.DataFrame.from_dict(metrics_sol)
+metrics_sol = metrics_sol.set_axis(['Random Forest', 'KNN', 'SVM', 'Log Regression', "Ensemble"])
+metrics_sol
+
     
     
