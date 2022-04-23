@@ -19,6 +19,110 @@ sns.countplot("DUAL", data = df_commodity_eda, palette = "hls")
 plt.title('COMMODITY_DUAL', fontweight="bold", fontsize =10)
 plt.show()
 
+#SOLUTION/COMMODITY
+crosstab_commodity_solutions = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                           columns=df_commodity_eda["SOLUTIONS"], normalize='index')
+crosstab_commodity_solutions.plot.bar(figsize=(6, 4),
+                                      rot=0).set(ylabel="%", xlabel="")
+plt.title('Solution by commodity type', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+# DUAL/LOYALTY
+crosstab_loyalty_dual = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                    columns=df_commodity_eda["LOYALTY_PROGRAM"],
+                                    normalize="index")
+crosstab_loyalty_dual.plot.bar(figsize=(6, 4),
+                               rot=0, color=('green', 'red')).set(ylabel="%", xlabel="")
+plt.title('Loyalty by commodity', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+# DUAL/WEB REGISTRATION
+crosstab_loyalty_dual = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                    columns=df_commodity_eda["WEB_PORTAL_REGISTRATION"],
+                                    normalize="index")
+crosstab_loyalty_dual.plot.bar(figsize=(6, 4),
+                               rot=0, color=('green', 'red')).set(ylabel="%", xlabel="")
+plt.title('DUAL AND WEB PORTAL', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+# DUAL/SENIORITY
+crosstab_custsen_solutions = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                         columns=df_commodity_eda["CUSTOMER_SENIORITY"], normalize='index')
+crosstab_custsen_solutions.plot.bar(figsize=(6, 4),
+                                    rot=0, color=('hotpink', 'deeppink', 'mediumvioletred')).set(ylabel="Percentage",
+                                                                                                 xlabel="")
+plt.title('DUAL by Customer Seniority', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+#PRIVACY
+crosstab_privacy_solutions = pd.crosstab(index=dataset["DUAL"],
+                                    columns=dataset["CONSENSUS_PRIVACY"], normalize='index')
+crosstab_privacy_solutions.plot.bar(figsize=(6, 4),
+                               rot=0, color=('red', 'green')).set(ylabel="Percentage", xlabel = "Solution")
+plt.title('DUAL by Privacy Consensus', fontweight="bold", fontsize =10)
+plt.show()
+
+# DUAL/AREA
+crosstab_area_solutions = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                      columns=df_commodity_eda["AREA"], normalize='index')
+crosstab_area_solutions.plot.bar(figsize=(6, 4),
+                                 rot=0, color=('limegreen', 'lightcoral', 'deepskyblue', 'gold')).set(
+    ylabel="Percentage", xlabel="Solution")
+plt.title('DUAL by Area of Italy', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+# DUAL/FLAG_BAD_CUSTOMER
+crosstab_flag_solutions = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                      columns=df_commodity_eda["FLAG_BAD_CUSTOMER"], normalize='index')
+crosstab_flag_solutions.plot.bar(figsize=(6, 4),
+                                 rot=0, color=('yellowgreen', 'crimson')).set(ylabel="Percentage", xlabel="")
+plt.title('Solutions by Bad Customer Flag', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+# AVG CONSUMPTION GAS and AVG CONSUMPTION POWER
+bp = sns.boxplot(data=df_commodity_eda, x="DUAL", y="AVG_CONSUMPTION_GAS_M3")  # RUN PLOT
+bp.set_ylim([0, 200000])
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+#DUAL/EMAIL_VALIDATED
+crosstab_dual_mail = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                 columns=df_commodity_eda["EMAIL_VALIDATED"], normalize='index')
+crosstab_dual_mail.plot.bar(figsize=(6, 4),
+                             rot=0, color=('green', 'red')).set(ylabel="Percentage", xlabel="")
+plt.title('Dual by email_validated', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+#DUAL/GENRE
+crosstab_dual_mail = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                 columns=df_commodity_eda["GENRE"], normalize='index')
+crosstab_dual_mail.plot.bar(figsize=(6, 4),
+                             rot=0, color=('yellowgreen', 'crimson')).set(ylabel="Percentage", xlabel="")
+plt.title('Dual by genre', fontweight="bold", fontsize=10)
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
+
+#DUAL/CLC_STATUS
+crosstab_commodity_solutions = pd.crosstab(index=df_commodity_eda["DUAL"],
+                                    columns=df_commodity_eda["CLC_STATUS"], normalize='index')
+crosstab_commodity_solutions.plot.bar(figsize=(6, 4),
+                               rot=0).set(ylabel="Count")
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.title('dual by clc_status', fontweight="bold", fontsize =10)
+plt.show()
+
+# AVG CONSUMPTION GAS and AVG CONSUMPTION POWER
+bp = sns.boxplot(data=df_commodity_eda, x="DUAL", y="AVG_CONSUMPTION_GAS_M3")  # RUN PLOT
+bp.set_ylim([0, 200000])
+plt.xticks([0, 1], ['NON DUAL', 'DUAL'])
+plt.show()
 
 ##### SOLUTIONS #####
 
