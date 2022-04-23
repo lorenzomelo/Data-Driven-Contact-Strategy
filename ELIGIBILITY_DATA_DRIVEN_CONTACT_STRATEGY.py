@@ -743,6 +743,7 @@ dataset_non_elegib_sol.dropna(axis=0, inplace=True)
 class_2, class_1 = dataset_non_elegib_sol.SOLUTIONS.value_counts()
 c2 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 0]
 c1 = dataset_non_elegib_sol[dataset_non_elegib_sol['SOLUTIONS'] == 1]
+random.seed(123)
 df_3 = c2.sample(class_1)
 under_sol = pd.concat([df_3, c1], axis=0)
 
