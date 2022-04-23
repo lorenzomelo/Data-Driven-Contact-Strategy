@@ -505,27 +505,13 @@ recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-W
 
 
 
-#PROPENSITY 
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-
-#dataset = pd.read_csv("dataset4.csv", sep=",", index_col=0)
-#dummy_df = pd.read_csv("dummy_df.csv", sep=",", index_col=0)
-
-#creo dataset con le features di dataset4 + quelle di dummy_df senza sovrapposizioni
 different_cols = dummy_df.columns.difference(dataset4.columns)
 dataset_difference = dummy_df[different_cols]
 
 dataset_whole = pd.merge(dataset4, dataset_difference, left_index=True,
                      right_index=True, how='inner')
 
-#Seleziono le variabili + quelle che servono per fare sciegliere gli elegible
 dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West','WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
                                      'N_DISUSED_GAS_POINTS', 
                                      'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
@@ -533,7 +519,8 @@ dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_Nort
                                      "CONSENSUS_PRIVACY", "ID", "COMMODITY_DUAL", "PHONE_VALIDATED", "EMAIL_VALIDATED"], axis=1)
 
 
-#DUAL
+
+### DUAL PROPENSITY ###
 def non_elegible(df):
     df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
     return df
@@ -547,37 +534,32 @@ def elegible(df):
 dataset_elegible = elegible(dataset_dual)
 dataset_elegible = dataset_elegible.dropna(axis=0)
 
-#creo dataset bilanciato random
 class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
 c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
 c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
+import random
+random.seed(123)
 df_2 = c2.sample(class_1)
 under_dual = pd.concat([df_2, c1], axis=0)
-
+    
+#under_dual.to_csv("under_dual.csv")
+#dataset_elegible.to_csv("dataset_elegible.csv")
+    
+#Random Forest
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+import numpy as np
 X = under_dual.iloc[:, :-5].values
 y = under_dual["COMMODITY_DUAL"]
-
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-
-#SCALE
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
-
-#RANDOMFOREST
-#GRIDSEARCH
-classifier = RandomForestClassifier(random_state = 0)
-param_grid = {
-    'n_estimators': [90,95,100,105,110],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth': [4, 5, 6, 7, 8,9,10],
-    'criterion': ['gini', 'entropy']
-}
-CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
-CV_rfc.fit(X_train, y_train)
-print(CV_rfc.best_params_)
-
-#MODEL
 rfc1 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=100,
                               max_depth=8, criterion='gini')
 rfc1.fit(X_train, y_train)
@@ -593,40 +575,78 @@ X_pred = dataset_elegible.iloc[:, :-5].values
 X_pred = sc.transform(X_pred)
 predicted = rfc1.predict_proba(X_pred)
 predicted = pd.DataFrame(predicted)
-predicted = predicted[predicted[1] > 0.5]
+predicted['RANDOM PREDICTION'] = np.where(predicted[0] >= 0.5, 0, 1)
+dataset_elegible['RANDOM PREDICTION'] = predicted['RANDOM PREDICTION'].values
 
-#LOGISTIC
-from sklearn.linear_model import LogisticRegression
-logreg = LogisticRegression()
-logreg.fit(X_train, y_train.values.ravel())
-y_pred_log = logreg.predict(X_test)
-print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(X_test, y_test)))
-print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_log)))
-print("Random Forest - Precision: " + str(precision_score(y_test, y_pred_log)))
-print("Random Forest - Recall: " + str(recall_score(y_test, y_pred_log)))
 
-cfm = confusion_matrix(y_test,y_pred)
-print(cfm)
+ensemble = pd.DataFrame(y_test)
+ensemble['RANDOM PREDICTION'] = pd.Series(y_pred).values
 
-#PREDICTION OF THE LOGISTIC
-pred_dual_log = logreg.predict_proba(X_pred)
-pred_dual_log = pd.DataFrame(pred_dual_log)
-pred_dual_log['ID']= dataset_elegible['ID'].values
-pred_dual_log = pred_dual_log[pred_dual_log[1] > 0.2]
+
+#KNN
+from sklearn.neighbors import KNeighborsClassifier
+
+'''
+X = under_dual.iloc[:, :-5].values
+y = under_dual["COMMODITY_DUAL"]
+X_train, X_test, y_train_dual, y_test_dual = train_test_split(X, y, test_size=0.3, random_state=0)
+sc = StandardScaler()
+X_train_dual = sc.fit_transform(X_train)
+X_test_dual = sc.transform(X_test)
+'''
+
+knn_model_dual = KNeighborsClassifier(n_neighbors = 19)
+knn_model_dual.fit(X_train, y_train)
+y_pred_knn_dual =knn_model_dual.predict(X_test)
+
+# Evaluation metrics
+accuracy_train = knn_model_dual.score(X_train, y_train)
+print("KNN - Accuracy on the training set: " + str(accuracy_train))
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_knn_dual)))
+print("KNN - Precision: " + str(precision_score(y_test, y_pred_knn_dual)))
+print("KNN - Recall: " + str(recall_score(y_test,y_pred_knn_dual)))
+
+from sklearn.calibration import CalibratedClassifierCV
+calib_clf_dual = CalibratedClassifierCV(knn_model_dual, cv=3, method='sigmoid')
+calib_clf_dual.fit(X_train, y_train)
+y_calibprob_dual = calib_clf_dual.predict_proba(X_test)
+y_calibprob_dual = pd.DataFrame(y_calibprob_dual)
+y_test_dual = pd.DataFrame(y_test)
+
+predicted_knn_dual = pd.concat([y_calibprob_dual.reset_index(drop=True),y_test_dual.reset_index(drop=True)], axis=1)
+predicted_knn_dual['predicted'] = np.where(predicted_knn_dual[0]>= 0.5, 0,1)
+
+confusion_matrix_dual = pd.crosstab(predicted_knn_dual['COMMODITY_DUAL'], predicted_knn_dual['predicted'], rownames=['Actual'], colnames=['Predicted'])
+print(confusion_matrix_dual)
+
+'''
+X_pred_dual = dataset_elegible.iloc[:,:-5]
+X_pred_dual = sc.transform(X_pred_dual)
+'''
+
+pred_dual = calib_clf_dual.predict_proba(X_pred)
+pred_dual = pd.DataFrame(pred_dual)
+ID_column = dataset_elegible["ID"]
+pred_dual = pd.concat([pred_dual, ID_column.reset_index(drop=True)], axis = 1)
+
+pred_dual['KNN PREDICTION'] = np.where(pred_dual[0] >= 0.5, 0, 1)
+#dataset_elegible['KNN PREDICTION'] = pred_dual['KNN PREDICTION'].values
+
+ensemble['KNN PREDICTION'] = predicted_knn_dual['predicted'].values
 
 
 #SVM
 from sklearn.svm import SVC
-#GRID
-modelsvr = SVC()
-param = {'kernel' : ('linear', 'poly', 'rbf', 'sigmoid'),'C' : [1,5,10],'degree' : [3,8],'coef0' : [0.01,10,0.5],'gamma' : ('auto','scale')}
-CV_svm = GridSearchCV(estimator=modelsvr, param_grid=param, cv=5)
-CV_svm.fit(X_train, y_train)
-print(CV_svm.best_params_)
-
 svm_model = SVC(C=1, coef0=0.01, degree=3, gamma='auto', kernel='rbf')
 svm_model.fit(X_train, y_train)
 y_pred_svm = svm_model.predict(X_test)
+
+clf = CalibratedClassifierCV(svm_model, cv=3) 
+clf.fit(X_train, y_train)
+y_proba = clf.predict_proba(X_test)
+y_proba = pd.DataFrame(y_proba)
+y_proba['SVM PREDICTION'] = np.where(y_proba[0] >= 0.5, 0, 1)
 
 accuracy_train = svm_model.score(X_train, y_train)
 print("Accuracy on the training set: " + str(accuracy_train))
@@ -634,84 +654,72 @@ print("Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_svm)))
 print("Precision: " + str(precision_score(y_test, y_pred_svm)))
 print("Recall: " + str(recall_score(y_test, y_pred_svm)))
 
-#CALIBRATION
-svm = SVC(C=1, coef0=0.01, degree=3, gamma='auto', kernel='rbf')
-clf = CalibratedClassifierCV(svm_model, cv=3) 
-clf.fit(X_train, y_train)
-y_proba = clf.predict_proba(X_test)
-
-#PREDICTION
 pred_dual_svm = clf.predict_proba(X_pred)
 pred_dual_svm = pd.DataFrame(pred_dual_svm)
 pred_dual_svm['ID']= dataset_elegible['ID'].values
-pred_dual_svm = pred_dual_svm[pred_dual_svm[1]>0.2]
+#pred_dual_svm = pred_dual_svm[pred_dual_svm[1]>0.2]
+
+pred_dual_svm['SVM PREDICTION'] = np.where(pred_dual_svm[0] >= 0.5, 0, 1)
+#dataset_elegible['SVM PREDICTION'] = pred_dual_svm['SVM PREDICTION'].values
+
+ensemble['SVM PREDICTION'] = y_proba['SVM PREDICTION'].values
 
 
-#### KNN
-from sklearn.neighbors import KNeighborsClassifier
+#Logistic Regression
+from sklearn.linear_model import LogisticRegression
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train.values.ravel())
+y_pred_log = logreg.predict(X_test)
+y_pred_log = pd.DataFrame(y_pred_log)
 
-#TUNING
-from sklearn.model_selection import GridSearchCV
-model = KNeighborsClassifier()
-param_grid = {'n_neighbors': [K for K in range(1,25)]}
-CV_knn = GridSearchCV(estimator=model, param_grid=param_grid, cv=5)
-CV_knn.fit(X_train_dual, y_train_dual)
-print(CV_knn.best_params_)
+print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(X_test, y_test)))
+print("Logistic Regression - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_log)))
+print("Logistic Regression - Precision: " + str(precision_score(y_test, y_pred_log)))
+print("Logistic Regression - Recall: " + str(recall_score(y_test, y_pred_log)))
 
-#MODEL
-knn_model_dual = KNeighborsClassifier(n_neighbors = 19)
-knn_model_dual.fit(X_train_dual, y_train_dual)
-y_pred_knn_dual =knn_model_dual.predict(X_test_dual)
+ensemble['LOG PREDICTION'] = y_pred_log[0].values
 
-'''
-# Evaluation metrics
-accuracy_train = knn_model_dual.score(X_train_dual, y_train_dual)
-print("KNN - Accuracy on the training set: " + str(accuracy_train))
-from sklearn.metrics import accuracy_score, precision_score, recall_score
-print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test_dual, y_pred_knn_dual)))
-print("KNN - Precision: " + str(precision_score(y_test_dual, y_pred_knn_dual)))
-print("KNN - Recall: " + str(recall_score(y_test_dual,y_pred_knn_dual)))
-'''
+pred_dual_log = logreg.predict_proba(X_pred)
+pred_dual_log = pd.DataFrame(pred_dual_log)
+pred_dual_log['ID']= dataset_elegible['ID'].values
+#pred_dual_log = pred_dual_log[pred_dual_log[1] > 0.2]
+pred_dual_log['LOG PREDICTION'] = np.where(pred_dual_log[0] >= 0.5, 0, 1)
+#dataset_elegible['LOG PREDICTION'] = pred_dual_log['LOG PREDICTION'].values
 
 
-#CALIBRATION
-from sklearn.calibration import CalibratedClassifierCV
-calib_clf_dual = CalibratedClassifierCV(knn_model_dual, cv=3, method='sigmoid')
-calib_clf_dual.fit(X_train_dual, y_train_dual)
-y_calibprob_dual = calib_clf_dual.predict_proba(X_test_dual)
-y_calibprob_dual = pd.DataFrame(y_calibprob_dual)
-y_test_dual = pd.DataFrame(y_test_dual)
+#Ensemble method
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+eclf_dual = VotingClassifier(estimators=[('Random Forest', rfc1), ('KNN', calib_clf_dual), ('SVM', clf), ('Logistic Regression', logreg)], voting='soft')
+eclf_dual = eclf_dual.fit(X_train, y_train)
+print(eclf_dual.predict(X_test))
 
-#PREDICTION ON THE Y_TEST_SOL
-predicted_knn_dual = pd.concat([y_calibprob_dual.reset_index(drop=True),y_test_dual.reset_index(drop=True)], axis=1)
-predicted_knn_dual['predicted'] = np.where(predicted_knn_dual[0]>= 0.5, 0,1)
+y_proba_ens = eclf_dual.predict_proba(X_test)
+y_proba_ens = pd.DataFrame(y_proba_ens)
+y_proba_ens['ENSEMBLE PREDICTION'] = np.where(y_proba_ens[0] >= 0.5, 0, 1)
+ensemble['ENSEMBLE PREDICTION'] = y_proba_ens['ENSEMBLE PREDICTION'].values
+pd.crosstab(ensemble['COMMODITY_DUAL'], ensemble['ENSEMBLE PREDICTION'])
 
-confusion_matrix_dual = pd.crosstab(predicted_knn_dual['COMMODITY_DUAL'], predicted_knn_dual['predicted'], rownames=['Actual'], colnames=['Predicted'])
-print(confusion_matrix_dual)
+(453+517)/(453+517+99+14)
+517/(517+99)
+517/(517+14)
 
-print("KNN for dual - Accuracy: " + str((448+483)/1083))
-print("KNN for dual - Precision: " + str((483)/(104+483)))
-print("KNN for dual - Recall: " + str((483)/(483+48)))
+metrics = {'accuracy': [0.8919667590027701, 0.866112650046168, 0.8910433979686058, 0.8919667590027701, 0.8910433979686058], 'precision': [0.8349514563106796, 0.8177496038034865, 0.8314606741573034, 0.8306709265175719, 0.8293460925039873], 'recall': [0.9717514124293786, 0.943502824858757, 0.975517890772128, 0.9792843691148776, 0.9792843691148776]}
+metrics_dual = pd.DataFrame.from_dict(metrics)
+metrics_dual = metrics_dual.set_axis(['Random Forest', 'KNN', 'SVM', 'Log Regression', "Ensemble"])
+metrics_dual
 
+predictions = eclf_dual.predict_proba(X_pred)
+predictions = pd.DataFrame(predictions)
+predictions['ID']= dataset_elegible['ID'].values
+predictions['PREDICTION_DUAL'] = np.where(predictions[0] >= 0.5, 0, 1)
 
+predictions = predictions.drop([0,1], axis = 1)
 
-#PREDICTION ON THE ELEGIBLES
-X_pred_dual = dataset_elegible.iloc[:,:-5]
-X_pred_dual = sc.transform(X_pred_dual)
-pred_dual = calib_clf_dual.predict_proba(X_pred_dual)
-pred_dual = pd.DataFrame(pred_dual)
-ID_column = dataset_elegible["ID"]
-pred_dual = pd.concat([pred_dual, ID_column.reset_index(drop=True)], axis = 1)
-pred_dual = pred_dual[pred_dual[1]>0.5]
-
-
-
+dataset = dataset.merge(predictions,how='left', left_on='ID', right_on='ID')
+dataset.columns
 
 
-
-################################################
-
-#SOLUTION
+### SOLUTION PROPENSITY ###
 def non_elegible_sol(df):
     df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["SOLUTIONS"] == 0)].index)
     return df
@@ -741,82 +749,56 @@ under_sol = pd.concat([df_3, c1], axis=0)
 X_sol = under_sol.iloc[:, :-5].values
 y_sol = under_sol["SOLUTIONS"]
 
+#under_sol.to_csv("under_sol.csv")
+#dataset_elegib_sol.to_csv("dataset_elegib_sol.csv")
+
 X_train_sol, X_test_sol, y_train_sol, y_test_sol = train_test_split(X_sol, y_sol, test_size=0.3, random_state=0)
-#SCALE
 sc = StandardScaler()
 X_train_sol = sc.fit_transform(X_train_sol)
 X_test_sol = sc.transform(X_test_sol)
 
-##RANDOMFOREST
-classifier = RandomForestClassifier(random_state = 0)
-param_grid = {
-    'n_estimators': [90,95,100,105,110],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    'max_depth': [4, 5, 6, 7, 8,9,10],
-    'criterion': ['gini', 'entropy']
-}
-CV_rfc = GridSearchCV(estimator=classifier, param_grid=param_grid, cv=3)
-CV_rfc.fit(X_train_sol, y_train_sol)
-print(CV_rfc.best_params_)
+#Random Forest
 rfc2 = RandomForestClassifier(random_state=0, max_features='auto', n_estimators=105,
                               max_depth=4, criterion='gini')
 rfc2.fit(X_train_sol, y_train_sol)
 y_pred_sol = rfc2.predict(X_test_sol)
+y_pred_sol = pd.DataFrame(y_pred_sol)
+
 accuracy_train = rfc2.score(X_train_sol, y_train_sol)
 print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
 print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_sol)))
 print("Random Forest - Precision: " + str(precision_score(y_test_sol, y_pred_sol)))
 print("Random Forest - Recall: " + str(recall_score(y_test_sol, y_pred_sol)))
 
-#PREDICTION ON THE ELEGIBLES
-X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
+X_pred_sol = dataset_elegib_sol.iloc[:, :-5].values
 X_pred_sol = sc.transform(X_pred_sol)
-predicted_sol = rfc2.predict_proba(X_pred_sol)
-predicted_sol = pd.DataFrame(predicted_sol)
-predicted_sol = predicted_sol[predicted_sol[1] > 0.4]
 
-#SVM##########
-#GRIDSEARCH
-modelsvr = SVC()
-param = {'kernel' : ('linear', 'poly', 'rbf', 'sigmoid'),'C' : [1,5,10],'degree' : [3,8],'coef0' : [0.01,10,0.5],'gamma' : ('auto','scale')}
-CV_svm = GridSearchCV(estimator=modelsvr, param_grid=param, cv=5)
-CV_svm.fit(X_train_sol, y_train_sol)
-print(CV_svm.best_params_)
-#model
+ensemble_sol = pd.DataFrame(y_test_sol)
+ensemble_sol['RANDOM PREDICTION'] = y_pred_sol[0].values
+
+
+#SVM
 svm_model = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
 svm_model.fit(X_train_sol, y_train_sol)
 y_pred_svm = svm_model.predict(X_test_sol)
-accuracy_train = svm_model.score(X_train_sol, y_train_sol)
 
-#ACCURACY
-print(accuracy_train)
+accuracy_train = svm_model.score(X_train_sol, y_train_sol)
 print("Accuracy on the training set: " + str(accuracy_train))
 print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_svm)))
 print("Precision: " + str(precision_score(y_test_sol, y_pred_svm)))
 print("Recall: " + str(recall_score(y_test_sol, y_pred_svm)))
 
-#CALIBRATION
 svm = SVC(C=1, coef0=0.5, degree=3, gamma='auto', kernel='poly')
-clf = CalibratedClassifierCV(svm_model, cv=3) 
-clf.fit(X_train_sol, y_train_sol)
-y_proba = clf.predict_proba(X_test_sol)
-y_proba = pd.DataFrame(y_proba)
+clf_sol = CalibratedClassifierCV(svm_model, cv=3) 
+clf_sol.fit(X_train_sol, y_train_sol)
+y_proba_sol = clf_sol.predict_proba(X_test_sol)
+y_proba_sol = pd.DataFrame(y_proba_sol)
 y_test_sol = pd.DataFrame(y_test_sol)
+y_proba_sol['SVM PREDICTION'] = np.where(y_proba_sol[0] >= 0.5, 0, 1)
+ensemble_sol['SVM PREDICTION'] = y_proba_sol['SVM PREDICTION'].values
 
-#PREDICTION ON THE Y_TEST_SOL
-predicted_svm = pd.concat([y_proba.reset_index(drop=True),y_test_sol.reset_index(drop=True)], axis=1)
-predicted_svm['predicted'] = np.where(predicted_svm[0]>= 0.5, 0,1)
-confusion_matrix = pd.crosstab(predicted_svm['SOLUTIONS'], predicted_svm['predicted'], rownames=['Actual'], colnames=['Predicted'])
-print(confusion_matrix)
 
-#PREDICTION ON THE ELEGIBLES
-X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
-X_pred_sol = sc.transform(X_pred_sol)
-pred_solution = clf.predict_proba(X_pred_sol)
-pred_solution = pd.DataFrame(pred_solution)
-pred_solution = pred_solution[pred_solution[1]>0.5]
-
-#LOGISTIC
+#Logistic Regression
 mod_log_sol = LogisticRegression()
 mod_log_sol.fit(X_train_sol, y_train_sol.values.ravel())
 mod_pred_log = mod_log_sol.predict(X_test_sol)
@@ -825,38 +807,22 @@ print("Accuracy on the test set: " + str(accuracy_score(y_test_sol, mod_pred_log
 print("Precision: " + str(precision_score(y_test_sol, mod_pred_log)))
 print("Recall: " + str(recall_score(y_test_sol, mod_pred_log)))
 
-pred_solution_log = mod_log_sol.predict_proba(X_pred_sol)
-pred_solution_log = pd.DataFrame(pred_solution_log)
-pred_solution_log['ID']= dataset_elegib_sol['ID'].values
 
+mod_pred_log = pd.DataFrame(mod_pred_log)
+ensemble_sol['LOG PREDICTION'] = mod_pred_log[0].values
 
 #KNN
-from sklearn.neighbors import KNeighborsClassifier
-
-#TUNING
-from sklearn.model_selection import GridSearchCV
-model = KNeighborsClassifier()
-param_grid = {'n_neighbors': [K for K in range(3,17)]}
-CV_knn = GridSearchCV(estimator=model, param_grid=param_grid, cv=5)
-CV_knn.fit(X_train_sol, y_train_sol)
-print(CV_knn.best_params_)
-
-#MODEL
 knn_model_sol = KNeighborsClassifier(n_neighbors = 9)
 knn_model_sol.fit(X_train_sol, y_train_sol)
 y_pred_knn_sol =knn_model_sol.predict(X_test_sol)
 
-'''
-# Evaluation metrics
 accuracy_train = knn_model_sol.score(X_train_sol, y_train_sol)
 print("KNN - Accuracy on the training set: " + str(accuracy_train))
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test_sol, y_pred_knn_sol)))
 print("KNN - Precision: " + str(precision_score(y_test_sol, y_pred_knn_sol)))
 print("KNN - Recall: " + str(recall_score(y_test_sol,y_pred_knn_sol)))
-'''
 
-#CALIBRATION
 from sklearn.calibration import CalibratedClassifierCV
 calib_clf_sol = CalibratedClassifierCV(knn_model_sol, cv=3, method='sigmoid')
 calib_clf_sol.fit(X_train_sol, y_train_sol)
@@ -864,33 +830,50 @@ y_calibprob_sol = calib_clf_sol.predict_proba(X_test_sol)
 y_calibprob_sol = pd.DataFrame(y_calibprob_sol)
 y_test_sol = pd.DataFrame(y_test_sol)
 
-#PREDICTION ON THE Y_TEST_SOL
 predicted_knn_sol = pd.concat([y_calibprob_sol.reset_index(drop=True),y_test_sol.reset_index(drop=True)], axis=1)
 predicted_knn_sol['predicted'] = np.where(predicted_knn_sol[0]>= 0.5, 0,1)
 
-confusion_matrix_sol = pd.crosstab(predicted_knn_sol['SOLUTIONS'], predicted_knn_sol['predicted'], rownames=['Actual'], colnames=['Predicted'])
-print(confusion_matrix_sol)
-
-print("KNN for solutions - Accuracy: " + str((36+32)/105))
-print("KNN for solutions - Precision: " + str((32)/(32+18)))
-print("KNN for solutions - Recall: " + str((32)/(32+19)))
+ensemble_sol['KNN PREDICTION'] = predicted_knn_sol['predicted'].values
 
 
-#PREDICTION ON THE ELEGIBLES
-X_pred_sol = dataset_elegib_sol.iloc[:,:-5]
-X_pred_sol = sc.transform(X_pred_sol)
-pred_sol = calib_clf_sol.predict_proba(X_pred_sol)
-pred_sol = pd.DataFrame(pred_sol)
-ID_column = dataset_elegib_sol["ID"]
-pred_sol = pd.concat([pred_sol, ID_column.reset_index(drop=True)], axis = 1)
-pred_sol = pred_sol[pred_sol[1]>0.5]
+#Ensemble method
+eclf_sol = VotingClassifier(estimators=[('Random Forest', rfc2), ('KNN', calib_clf_sol), ('SVM', clf_sol), ('Logistic Regression', mod_log_sol)], voting='soft')
+eclf_sol = eclf_sol.fit(X_train_sol, y_train_sol)
+print(eclf_sol.predict(X_test_sol))
+
+y_proba_ens_sol = eclf_sol.predict_proba(X_test_sol)
+y_proba_ens_sol = pd.DataFrame(y_proba_ens_sol)
+y_proba_ens_sol['ENSEMBLE PREDICTION'] = np.where(y_proba_ens_sol[0] >= 0.5, 0, 1)
+ensemble_sol['ENSEMBLE PREDICTION'] = y_proba_ens_sol['ENSEMBLE PREDICTION'].values
+pd.crosstab(ensemble_sol['SOLUTIONS'], ensemble_sol['ENSEMBLE PREDICTION'])
+
+(42+33)/(42+33+12+18)
+33/(33+12)
+33/(33+18)
+
+metrics_sol = {'accuracy': [0.6857142857142857, 0.6761904761904762, 0.6857142857142857, 0.6571428571428571, 0.7142857142857143], 'precision': [0.725, 0.6808510638297872, 0.6730769230769231, 0.6530612244897959, 0.7333333333333333], 'recall': [0.5686274509803921, 0.6274509803921569, 0.6862745098039216, 0.6274509803921569, 0.6470588235294118]}
+metrics_sol = pd.DataFrame.from_dict(metrics_sol)
+metrics_sol = metrics_sol.set_axis(['Random Forest', 'KNN', 'SVM', 'Log Regression', "Ensemble"])
+metrics_sol
 
 
+predictions_sol = eclf_sol.predict_proba(X_pred_sol)
+predictions_sol = pd.DataFrame(predictions_sol)
+predictions_sol['ID']= dataset_elegib_sol['ID'].values
+predictions_sol['PREDICTION_SOL'] = np.where(predictions_sol[0] >= 0.5, 0, 1)
+
+predictions_sol = predictions_sol.drop([0,1], axis = 1)
+
+dataset = dataset.merge(predictions_sol,how='left', left_on='ID', right_on='ID')
+dataset.columns
 
 
-#############################################################
+dataset.value_counts('PREDICTION_SOL')
+dataset.value_counts('PREDICTION_DUAL')
 
-#ELIGIBILITY
+
+###ELIGIBILITY###
+
 column_names = ["ID", "Month_1", "Month_2", "Month_3", "Month_4", "Month_5", "Month_6",
                 "Month_7", "Month_8", "Month_9", "Month_10", "Month_11", "Month_12"]
 Cross_Selling_DEM = pd.DataFrame(columns=column_names)
@@ -919,8 +902,6 @@ def clean_phone(df):
 
 dataset_final_eligible = clean_phone(dataset_eligible)
 
-# MERGE THE TWO
-dataset_final_eligible['randNumCol'] = np.random.randint(0, 2, size=len(dataset_final_eligible))  # add column with random number to proxy propensity
 
 ### DIVIDING DATASET ACCORDING TO THE ELIGIBILITY
 pd.options.mode.chained_assignment = None
@@ -935,12 +916,13 @@ dataset_final_eligible['REFERENCE_DATE'] = pd.to_datetime(dataset_final_eligible
 dataset_final_eligible['N_months'] = ((dataset_final_eligible.DATE_LAST_CAMPAIGN - dataset_final_eligible.REFERENCE_DATE)/np.timedelta64(1, 'M'))
 dataset_final_eligible['N_months'] = dataset_final_eligible['N_months'].astype(int).abs()
 
-cross_selling_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
-cross_selling_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0)] 
-cross_selling_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
-solution_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 12) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
-solution_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0)]
-solution_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO")]
+cross_selling_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO") & (dataset_final_eligible["PREDICTION_DUAL"] == 1)]
+cross_selling_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0) & (dataset_final_eligible["PREDICTION_DUAL"] == 1)] 
+cross_selling_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO") & (dataset_final_eligible["PREDICTION_DUAL"] == 1)]
+solution_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 12) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO") & (dataset_final_eligible["PREDICTION_SOL"] == 1)]
+solution_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0) & (dataset_final_eligible["PREDICTION_SOL"] == 1)]
+solution_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO") & (dataset_final_eligible["PREDICTION_SOL"] == 1)]
+
 
 #CROSS SELLING
 for index, row in cross_selling_dem_general.iterrows():
@@ -953,40 +935,45 @@ for index, row in cross_selling_sms_general.iterrows():
 
 for index, row in cross_selling_tls_general.iterrows():
     l = [row["ID"],0,0,0,0,0,1,0,0,0,0,0,1]
-    Cross_Selling_TLS.loc[len(Solution_TLS)] = l
+    Cross_Selling_TLS.loc[len(Cross_Selling_TLS)] = l
 
 #SOLUTION
 for index, row in solution_dem_general.iterrows():
-    if (row["PHONE_VALIDATED"] == "KO") & (row["COMMODITY"] != "DUAL"):
+    if (row["PHONE_VALIDATED"] == "KO") & (row["PREDICTION_DUAL"] != 1):
         l = [row["ID"],0,1,0,1,0,0,0,0,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = l
-    elif (row["PHONE_VALIDATED"] == "KO") & (row["COMMODITY"] == "DUAL"):
+    elif (row["PHONE_VALIDATED"] == "KO") & (row["PREDICTION_DUAL"] == 1):
         m = [row["ID"],1,0,1,0,0,0,0,0,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = m
-    elif (row["PHONE_VALIDATED"] != "KO") & (row["COMMODITY"] == "DUAL"):
+    elif (row["PHONE_VALIDATED"] != "KO") & (row["PREDICTION_DUAL"] == 1):
         n = [row["ID"],0,0,1,0,1,0,0,0,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = n
-    elif (row["PHONE_VALIDATED"] != "KO") & (row["COMMODITY"] != "DUAL"):
+    elif (row["PHONE_VALIDATED"] != "KO") & (row["PREDICTION_DUAL"] != 1):
         o = [row["ID"],0,0,0,1,0,0,0,1,0,0,0,0]
         Solution_DEM.loc[len(Solution_DEM)] = o
 
 for index, row in solution_sms_general.iterrows():
-    if row["COMMODITY"] == "DUAL":
+    if row["PREDICTION_DUAL"] == 1:
         l = [row["ID"],0,0,1,0,1,0,0,0,0,0,0,0]
         Solution_SMS.loc[len(Solution_SMS)] = l
-    elif row["COMMODITY"] != "DUAL":
+    elif row["PREDICTION_DUAL"] != 1:
         m = [row["ID"],0,0,0,1,0,0,0,1,0,0,0,0]
         Solution_SMS.loc[len(Solution_SMS)] = m
 
 for index, row in solution_tls_general.iterrows():
-    if row["COMMODITY"] == "DUAL":
+    if row["PREDICTION_DUAL"] == 1:
         l = [row["ID"],1,0,0,0,0,0,0,0,0,0,0,0]
-        Cross_Selling_TLS.loc[len(Solution_TLS)] = l
-    elif row["COMMODITY"] != "DUAL":
+        Solution_TLS.loc[len(Solution_TLS)] = l
+    elif row["PREDICTION_DUAL"] != 1:
         m = [row["ID"],0,1,0,0,0,0,0,0,0,0,0,0]
-        Cross_Selling_TLS.loc[len(Solution_TLS)] = m
+        Solution_TLS.loc[len(Solution_TLS)] = m
 
-       
-    
-    
-    
+
+Cross_Selling_DEM.to_csv("Cross_Selling_DEM.csv")
+Cross_Selling_SMS.to_csv("Cross_Selling_SMS.csv")
+Cross_Selling_TLS.to_csv("Cross_Selling_TLS.csv")
+Solution_DEM.to_csv("Solution_DEM.csv")
+Solution_SMS.to_csv("Solution_SMS.csv")
+Solution_TLS.to_csv("Solution_TLS.csv")
+
+
