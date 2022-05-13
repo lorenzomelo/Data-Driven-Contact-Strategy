@@ -1,10 +1,13 @@
+# Import the required libraries and load the dataset
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-dataset = pd.read_csv("DLT_AI_and_DATA_CUSTOMER_BASE_EN.csv", sep=";", encoding = 'unicode_escape')
+dataset = pd.read_csv("DLT_AI_and_DATA_CUSTOMER_BASE_EN (1).csv", sep=";", encoding = 'unicode_escape')
 dataset = pd.DataFrame(dataset)
+
 
 ###### EXPLORATORY DATA ANALYSIS #######
 
@@ -225,13 +228,16 @@ plt.show()
 
 
 
-##### Deleting risk churn and leaving
+##### Deleting customers at risk of being churned or leaving (they cannot be contacted for commercial purposes)
 dataset4 = dataset.drop(dataset[dataset["CLC_STATUS"] == "4-Risk churn"].index)
 dataset4 = dataset4.drop(dataset4[dataset4["CLC_STATUS"] == "5-Leaving"].index)
 
 
 
 ##### OUTLIER DETECTION ######
+
+# Replace the outliers with the respective median
+
 exp_dataset4 = dataset4.filter(['LAST_MONTH_DESK_VISITS', 'LAST_3MONTHS_DESK_VISITS',
        'LAST_YEAR_DESK_VISITS', 'LAST_MONTH_CC_REQUESTS',
        'LAST_3MONTHS_CC_REQUESTS', 'LAST_YEAR_CC_REQUESTS','N_GAS_POINTS', 'N_POWER_POINTS', 'N_DISUSED_GAS_POINTS',
@@ -257,9 +263,7 @@ for column in exp_dataset4.columns:
         Q3=exp_dataset4[column].quantile(0.75)
         exp_dataset4[column] = np.where(exp_dataset4[column] > Q3, Q2, exp_dataset4[column])
 
-
 descr = exp_dataset4.describe().T
-exp_dataset4.boxplot(vert=False)
 
 dataset4 = dataset4.drop(exp_dataset4.columns, axis = 1)
 dataset4 = pd.concat([dataset4.reset_index(drop=True),exp_dataset4.reset_index(drop = True)], axis=1)
@@ -267,7 +271,7 @@ dataset4 = pd.concat([dataset4.reset_index(drop=True),exp_dataset4.reset_index(d
 descr2 = dataset4.describe().T
 
 
-#### dataset for dummies
+#### Create a dataset made of dummy variables deriving from the original ones
 df_for_dummies = dataset4.drop(['ID', 'CONSENSUS_PRIVACY', 'DATE_LAST_VISIT_DESK','DATE_LAST_REQUEST_CC',
                           'FIRST_ACTIVATION_DATE', 'DATE_LAST_CAMPAIGN', 'SUPPLY_START_DATE', 'EMAIL_VALIDATED',
                           'PHONE_VALIDATED', 'YEAR_BIRTH', 
@@ -284,11 +288,13 @@ dummy_df = pd.get_dummies(df_for_dummies)
 
 
 # UNDERSAMPLING 
-class_2,class_1 = dummy_df.SOLUTIONS.value_counts()
-c2 = dummy_df[dummy_df['SOLUTIONS'] == 0]
+
+# to overcome the problem of the unbalanced dataset, we randomly selecte observation from the majority class and delet them from the training dataset (random undersampling)
+class_2,class_1 = dummy_df.SOLUTIONS.value_counts() # The variables on the first line are of int datatype and shall be used in order to tell how much of a sample we want
+c2 = dummy_df[dummy_df['SOLUTIONS'] == 0] # # While between the second and the third line are of DataFrame datatype each is a slice of the DataFrame containing only one type of class. 
 c1 = dummy_df[dummy_df['SOLUTIONS'] == 1]
-df_2 = c2.sample(class_1)
-under_sol = pd.concat([df_2,c1],axis=0)
+df_2 = c2.sample(class_1) # On the fourth line, we re-assign the DataFrames to new ones but we will apply the sample function to it and pass to it the int value of the least class, in this case, class_1.
+under_sol = pd.concat([df_2,c1],axis=0) # Lastly, we will concatenate the last new two DataFrames as well as one of the original Dataframes, the one which contains the minority class label.
 under_sol.SOLUTIONS.value_counts()
 under_sol.to_csv("Logistic_solution.csv")
 
@@ -304,8 +310,11 @@ under_dual.to_csv("Logistic_dual.csv")
 
 
 ### CORRELATIONS 
+
+# check for correlation among the independent variables
 import seaborn as sn
 
+# Get diagonal and lower triangular pairs of correlation matrix
 def get_redundant_pairs(df):
     pairs_to_drop = set()
     cols = df.columns
@@ -314,6 +323,7 @@ def get_redundant_pairs(df):
             pairs_to_drop.add((cols[i], cols[j]))
     return pairs_to_drop
 
+# List top absolute correlations
 def get_top_abs_correlations(df, n=5):
     au_corr = df.corr(method = "spearman").abs().unstack()
     labels_to_drop = get_redundant_pairs(df)
@@ -324,6 +334,7 @@ print("Top Absolute Correlations")
 var_corr = get_top_abs_correlations(under_dual, 50)
 var_corr_2 = get_top_abs_correlations(under_sol, 50)
 
+# check for correlation between the independent variables and the dependent ones
 sol_corr = under_sol[under_sol.columns].corr(method = "spearman")['SOLUTIONS'][:]
 dual_corr = under_dual[under_dual.columns].corr(method = "spearman")['COMMODITY_DUAL'][:]
 sol_corr = pd.DataFrame(sol_corr).sort_values(by = 'SOLUTIONS', ascending=False)
@@ -332,12 +343,12 @@ dual_corr = pd.DataFrame(dual_corr).sort_values(by = 'COMMODITY_DUAL', ascending
 
 
 
-##### MEAN ANALYSIS #####
+##### FEATURE SELECTION #####
 
-### Analizziamo cosa caratterizza i "DUAL" e i "SOLUTIONS_1" guardando le medie
+### MEAN ANALYSIS ###
 
-## Alcune variabili che torneranno utili più tardi.
-# Facciamo una distinzione tra AVG_CONSUPTION e le altre variabili per via della "scala" dei valori
+## let's start by defining some variables that will come in handy later.
+# We make a distinction between AVG_CONSUPTION and the other variables due to the different ranges of values that characterize them
 avg_df = dataset4.filter(["AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH", "SOLUTIONS"], axis=1)
 dummy_avg_df = pd.get_dummies(avg_df)
 
@@ -347,15 +358,19 @@ dummy_avg_df_2 = dummy_avg_df_2.drop(["COMMODITY_GAS", "COMMODITY_POWER"], axis=
 
 
 ## SOLUTIONS
+# remove the variables belonging to the customer care interactions category, which we hypothesized not be relevant to in this case
 df_mean = dummy_df.drop(["AVG_CONSUMPTION_GAS_M3", "AVG_CONSUMPTION_POWER_KWH", 'N_DEM_CROSS_SELLING',
                           'N_SMS_CROSS_SELLING', 'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
                           'N_SMS_SOLUTION', 'N_TLS_SOLUTION'], axis = 1)
-df_mean = df_mean.groupby('SOLUTIONS').mean()
+# divide the dataset into those who have already purchased the contract and those who have not. 
+# then, for both groups we compute the average value of each of the features present in the dataset
+df_mean = df_mean.groupby('SOLUTIONS').mean() 
 df_mean.reset_index(drop=True, inplace=True)
 columns = list(df_mean.columns)
 df_mean = df_mean.T
 df_mean["variables"] = columns
 df_mean["difference"] = abs(df_mean[0] - df_mean[1])
+# The results are  sorted in descending order on the basis of the difference between the means of the two groups.
 sort_df = df_mean.sort_values(by=['difference'], ascending=False)
 difference_dataset = sort_df.head(20)
 difference_dataset.plot(x="variables", y=[0, 1], kind="barh")
@@ -393,8 +408,7 @@ avg_df_mean_2.plot(x="variables", y=[0, 1], kind="barh", color = ["green", "red"
 
 
 
-#FEATURE SELECTION
-#RANDOM FOREST
+### RANDOM FOREST ###
 
 # DUAL
 from sklearn.ensemble import RandomForestClassifier
@@ -407,56 +421,62 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 
 
 # df_random_dual = pd.read_csv("project_deloitte/Logistic_dual.csv")
+# once again, we remove the variables belonging to the customer care interactions category
 under_dual = under_dual.drop(['N_DEM_CROSS_SELLING', 'N_SMS_CROSS_SELLING',
                               'N_TLS_CROSS_SELLING', 'N_DEM_SOLUTION',
                               'N_SMS_SOLUTION', 'N_TLS_SOLUTION'], axis=1)
+
+# define the set of (potential) independent variables 
 X = under_dual.iloc[:, under_dual.columns != "COMMODITY_DUAL"].values
+# define the dependent variable
 y = under_dual["COMMODITY_DUAL"]
 
-#train test
-
+# split our dataset into two sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
 
-#Scale
-
+# Standardize features by removing the mean and scaling to unit variance
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
+# Before actually being trained, the algorithm goes through a tuning phase in order to maximize its performance.
+# without overfitting or creating too high of a variance.
+'''
 # GRID SEARCH / OPTIMIZATION
 rf_final = RandomForestClassifier(random_state=0)
+# manually defining a subset of the hyperparametric space 
 param_grid = {
     'n_estimators': [100, 500],
     'max_features': ['auto', 'sqrt', 'log2'],
     'max_depth': [4, 5, 6, 7, 8],
     'criterion': ['gini', 'entropy']
 }
+# Each combination’s performance is then evaluated using cross-validation and the best performing hyperparametric combination is chosen.
 CV_rfc = GridSearchCV(estimator=rf_final, param_grid=param_grid, cv=5)
 CV_rfc.fit(X_train, y_train)
 print(CV_rfc.best_params_)
+'''
 
-#MODEL
+# fit the model with the best performing hyperparametric combination
 rfc1=RandomForestClassifier(random_state=0, max_features='auto', n_estimators= 500, max_depth=7, criterion='gini')
 rfc1.fit(X_train, y_train)
 y_pred = rfc1.predict(X_test)
 
-# Evaluation metrics
-#CONFUSION MATRIX
-mat = confusion_matrix(y_test, y_pred)
+# Evaluate the model
+mat = confusion_matrix(y_test, y_pred) # compute the confusion matrix
 sns.heatmap(mat, square=True, annot=True, fmt='d', cbar=False)
 plt.xlabel('Predicted value')
 plt.ylabel('True value')
 plt.title("Random Forest Confusion Matrix", fontweight="bold", fontsize=12)
 plt.show()
 
-#ACCURACY
 accuracy_train = rfc1.score(X_train, y_train)
 print("Random Forest - Accuracy on the training set: " + str(accuracy_train))
 print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred)))
 print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
 print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
 
-#VISUALIZATION OF THE FEATURE_IMPORTANCE
+# visualize how much each variable is contributing to the decision.
 rfc1.feature_importances_
 sorted_idx = rfc1.feature_importances_.argsort()
 yaxis1 = pd.DataFrame(X, columns=['LOYALTY_PROGRAM', 'SOLUTIONS', 'NEW_CUSTOMER',
@@ -499,6 +519,8 @@ sns.set(font_scale=0.3)
 plt.rcParams['figure.dpi'] = 300
 plt.show()
 
+# Interestingly, the results deriving from the "mean analysis" have been almost completely confirmed.
+
 #RANDOM
 #SOLUTION
 
@@ -516,6 +538,7 @@ sc = StandardScaler()
 X_train_s = sc.fit_transform(X_train_s)
 X_test_s = sc.transform(X_test_s)
 
+'''
 #GRID SEARCH
 rf_final_sol = RandomForestClassifier(0)
 param_grid = {
@@ -527,6 +550,7 @@ param_grid = {
 CV_rfc_sol = GridSearchCV(estimator=rf_final_sol, param_grid=param_grid, cv=5)
 CV_rfc_sol.fit(X_train_s, y_train_s)
 print(CV_rfc_sol.best_params_)
+'''
 
 #MODEL
 rfc2=RandomForestClassifier(random_state=0, max_features='log2', n_estimators= 20, max_depth=6, criterion='entropy')
@@ -591,24 +615,9 @@ plt.rcParams['figure.dpi'] = 300
 plt.show()
 
 
-#FEAUTURE SELECTED FOR RECCOMENDATION
-
-recommend_sol = dummy_df.filter(['AVG_CONSUMPTION_GAS_M3', "COMMODITY_DUAL", 'ZONE_Piemonte', 'WEB_PORTAL_REGISTRATION', 
-                                 'AREA_North-West', 'CLC_STATUS_3-Customer Loyalty', 'BEHAVIOUR_SCORE_GOOD PAYER', 'LOYALTY_PROGRAM', 'AREA_SOUTH', 'ZONE_VENETO', 
-                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'AREA_North-East',
-                                 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling','CUSTOMER_SENIORITY_>3 YEARS', 'CUSTOMER_SENIORITY_<1 YEAR',
-                                 'ACQUISITION_CHANNEL_CC', 'BEHAVIOUR_SCORE_BAD PAYER', "AREA_CENTER" ], axis=1)
-
-recommend_dual = dummy_df.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_North-West',
-                                 'WEB_PORTAL_REGISTRATION', 'LAST_CAMPAIGN_TIPOLOGY_Cross-Selling',
-                                 'N_DISUSED_GAS_POINTS', 
-                                 'LAST_CAMPAIGN_TIPOLOGY_Caring', 'SOLUTIONS', 'CUSTOMER_SENIORITY_>3 YEARS', 'LAST_CAMPAIGN_TIPOLOGY_Renewal', 
-                                 'CUSTOMER_SENIORITY_1-3 YEARS', 'AVG_CONSUMPTION_GAS_M3' 
-                                 'LAST_GAS_PRODUCT_Traditional', "COMMODITY_DUAL"], axis=1)
-
-
-
-
+# Create the set of predictors on the basis of the results obtained from the feature selection.
+# The variables that lack of an economic meaning, together with the strongly correlated ones (e.g. the dummy variables deriving from the same original feature), are removed
+# The variables that would have helped us to identify non-elegible customers (e.g. "CONSENSUS_PRIVACY" and "PHONE_VALIDATED") have been added
 
 different_cols = dummy_df.columns.difference(dataset4.columns)
 dataset_difference = dummy_df[different_cols]
@@ -625,12 +634,15 @@ dataset_dual = dataset_whole.filter(['CLC_STATUS_3-Customer Loyalty', 'AREA_Nort
 
 
 ### DUAL PROPENSITY ###
+
+# constitute a dataset made up of non-eligible customers
 def non_elegible(df):
     df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "YES") & (df["COMMODITY_DUAL"] == 0)].index)
     return df
 dataset_non_elegible = non_elegible(dataset_dual)
 dataset_non_elegible = dataset_non_elegible.dropna(axis=0)
 
+#  constitute a dataset made up of eligible customers
 def elegible(df):
     df = df.drop(df[(df["CONSENSUS_PRIVACY"] == "NO") | (df["COMMODITY_DUAL"] == 1)].index)
     df = df.drop(df[(df["PHONE_VALIDATED"] == "KO") & (df["EMAIL_VALIDATED"] == 0)].index)
@@ -638,6 +650,8 @@ def elegible(df):
 dataset_elegible = elegible(dataset_dual)
 dataset_elegible = dataset_elegible.dropna(axis=0)
 
+# The training set and the test set derive from dataset_non_elegible. 
+# Therefore, also in this case, we perform a random undersampling
 class_2, class_1 = dataset_non_elegible.COMMODITY_DUAL.value_counts()
 c2 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 0]
 c1 = dataset_non_elegible[dataset_non_elegible['COMMODITY_DUAL'] == 1]
@@ -646,8 +660,7 @@ random.seed(123)
 df_2 = c2.sample(class_1)
 under_dual = pd.concat([df_2, c1], axis=0)
     
-#under_dual.to_csv("under_dual.csv")
-#dataset_elegible.to_csv("dataset_elegible.csv")
+
     
 #Random Forest
 from sklearn.ensemble import RandomForestClassifier
@@ -675,11 +688,11 @@ print("Random Forest - Accuracy on the test set: " + str(accuracy_score(y_test, 
 print("Random Forest - Precision: " + str(precision_score(y_test, y_pred)))
 print("Random Forest - Recall: " + str(recall_score(y_test, y_pred)))
 
-X_pred = dataset_elegible.iloc[:, :-5].values
-X_pred = sc.transform(X_pred)
-predicted = rfc1.predict_proba(X_pred)
+X_pred = dataset_elegible.iloc[:, :-5].values #create a subset of dataset_elegible  
+X_pred = sc.transform(X_pred) 
+predicted = rfc1.predict_proba(X_pred) # predict the probability that the customer will subscribe or not the contract 
 predicted = pd.DataFrame(predicted)
-predicted['RANDOM PREDICTION'] = np.where(predicted[0] >= 0.5, 0, 1)
+predicted['RANDOM PREDICTION'] = np.where(predicted[0] >= 0.5, 0, 1) # round the probabilities on the basis of the selected threshold and add a column with the final result
 dataset_elegible['RANDOM PREDICTION'] = predicted['RANDOM PREDICTION'].values
 
 
@@ -711,10 +724,12 @@ print("KNN - Accuracy on the test set: " + str(accuracy_score(y_test, y_pred_knn
 print("KNN - Precision: " + str(precision_score(y_test, y_pred_knn_dual)))
 print("KNN - Recall: " + str(recall_score(y_test,y_pred_knn_dual)))
 
+# because we need the probability of the event besides its classification, 
+# in the case of KNN (and later also of SVC) we recur to calibrated probabilities.
 from sklearn.calibration import CalibratedClassifierCV
-calib_clf_dual = CalibratedClassifierCV(knn_model_dual, cv=3, method='sigmoid')
+calib_clf_dual = CalibratedClassifierCV(knn_model_dual, cv=3, method='sigmoid') # fit and calibrate model on training data
 calib_clf_dual.fit(X_train, y_train)
-y_calibprob_dual = calib_clf_dual.predict_proba(X_test)
+y_calibprob_dual = calib_clf_dual.predict_proba(X_test) # evaluate the model
 y_calibprob_dual = pd.DataFrame(y_calibprob_dual)
 y_test_dual = pd.DataFrame(y_test)
 
@@ -807,19 +822,23 @@ pd.crosstab(ensemble['COMMODITY_DUAL'], ensemble['ENSEMBLE PREDICTION'])
 517/(517+99)
 517/(517+14)
 
+#create a dataset to compare the algorithm performance 
 metrics = {'accuracy': [0.8919667590027701, 0.866112650046168, 0.8910433979686058, 0.8919667590027701, 0.8910433979686058], 'precision': [0.8349514563106796, 0.8177496038034865, 0.8314606741573034, 0.8306709265175719, 0.8293460925039873], 'recall': [0.9717514124293786, 0.943502824858757, 0.975517890772128, 0.9792843691148776, 0.9792843691148776]}
 metrics_dual = pd.DataFrame.from_dict(metrics)
 metrics_dual = metrics_dual.set_axis(['Random Forest', 'KNN', 'SVM', 'Log Regression', "Ensemble"])
 metrics_dual
 
+# as it is the ensemble that has the highest performance, we choose this to predict who will sign the contract and who will not
 predictions = eclf_dual.predict_proba(X_pred)
 predictions = pd.DataFrame(predictions)
-predictions['ID']= dataset_elegible['ID'].values
-predictions['PREDICTION_DUAL'] = np.where(predictions[0] >= 0.5, 0, 1)
+predictions['ID']= dataset_elegible['ID'].values 
+predictions['PREDICTION_DUAL'] = np.where(predictions[0] >= 0.5, 0, 1) 
 
 predictions = predictions.drop([0,1], axis = 1)
 
-dataset = dataset.merge(predictions,how='left', left_on='ID', right_on='ID')
+# perform a left join between dataset and predictions on the basis of "ID", returning a dataframe containing all the rows of the left dataframe (dataset)
+# All the non-matching rows of the left dataframe contain NaN for the columns in the right dataframe.
+dataset = dataset.merge(predictions,how='left', left_on='ID', right_on='ID') 
 dataset.columns
 
 
@@ -969,7 +988,7 @@ predictions_sol['PREDICTION_SOL'] = np.where(predictions_sol[0] >= 0.5, 0, 1)
 
 predictions_sol = predictions_sol.drop([0,1], axis = 1)
 
-dataset = dataset.merge(predictions_sol,how='left', left_on='ID', right_on='ID')
+dataset = dataset.merge(predictions_sol,how='left', left_on='ID', right_on='ID') 
 dataset.columns
 
 
@@ -979,8 +998,9 @@ dataset.value_counts('PREDICTION_DUAL')
 
 ###ELIGIBILITY###
 
+# create the dataset in which monthly contact strategis will be inserted
 column_names = ["ID", "Month_1", "Month_2", "Month_3", "Month_4", "Month_5", "Month_6",
-                "Month_7", "Month_8", "Month_9", "Month_10", "Month_11", "Month_12"]
+                "Month_7", "Month_8", "Month_9", "Month_10", "Month_11", "Month_12"] 
 Cross_Selling_DEM = pd.DataFrame(columns=column_names)
 Cross_Selling_SMS = pd.DataFrame(columns=column_names)
 Cross_Selling_TLS = pd.DataFrame(columns=column_names)
@@ -1009,18 +1029,23 @@ dataset_final_eligible = clean_phone(dataset_eligible)
 
 
 ### DIVIDING DATASET ACCORDING TO THE ELIGIBILITY
+
+# filtering the costumers chosen by the propensity model on the basis of the "general rule": 
+# those customers whose last contact dates back to at least N months ago are eligible, where N = # months / # contacts per year.
 pd.options.mode.chained_assignment = None
-timefmt = "%d/%m/%Y"
+timefmt = "%d/%m/%Y" # set dates format
 dataset_final_eligible['DATE_LAST_CAMPAIGN'] = pd.to_datetime(dataset_final_eligible['DATE_LAST_CAMPAIGN'], format = timefmt)
 
 datatypes = dataset_final_eligible.dtypes
 
-dataset_final_eligible['REFERENCE_DATE'] = "26/04/2022"
+dataset_final_eligible['REFERENCE_DATE'] = "26/04/2022" # as reference date we take the day on which the project was delivered
 dataset_final_eligible['REFERENCE_DATE'] = pd.to_datetime(dataset_final_eligible['REFERENCE_DATE'], format = timefmt)
 
-dataset_final_eligible['N_months'] = ((dataset_final_eligible.DATE_LAST_CAMPAIGN - dataset_final_eligible.REFERENCE_DATE)/np.timedelta64(1, 'M'))
-dataset_final_eligible['N_months'] = dataset_final_eligible['N_months'].astype(int).abs()
+dataset_final_eligible['N_months'] = ((dataset_final_eligible.DATE_LAST_CAMPAIGN - dataset_final_eligible.REFERENCE_DATE)/np.timedelta64(1, 'M')) # compute the difference between the reference date and the date on which the last contact took place
+dataset_final_eligible['N_months'] = dataset_final_eligible['N_months'].astype(int).abs() # compute the absolute value of the result
 
+# create six subset of dataset_final_eligible (ne for every possible combination of marketing campaign and communication channel) 
+# on the basis of which the monthly contact strategies will be defined
 cross_selling_tls_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 6) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO") & (dataset_final_eligible["PREDICTION_DUAL"] == 1)]
 cross_selling_dem_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["EMAIL_VALIDATED"] != 0) & (dataset_final_eligible["PREDICTION_DUAL"] == 1)] 
 cross_selling_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >= 2) & (dataset_final_eligible["PHONE_VALIDATED"] != "KO") & (dataset_final_eligible["PREDICTION_DUAL"] == 1)]
@@ -1030,9 +1055,11 @@ solution_sms_general = dataset_final_eligible[(dataset_final_eligible.N_months >
 
 
 #CROSS SELLING
-for index, row in cross_selling_dem_general.iterrows():
-    l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
-    Cross_Selling_DEM.loc[len(Cross_Selling_DEM)] = l
+# The criterion is to maximize the number of contacts, while remaining within the limits imposed by both the campaign rules and the cross-campaign rules. 
+
+for index, row in cross_selling_dem_general.iterrows(): # iterate through the dataset of the combination in question
+    l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0] # create a list that represents the monthly contact strategy for each customer of the respective dataset 
+    Cross_Selling_DEM.loc[len(Cross_Selling_DEM)] = l # append the monthly contact strategy to the final dataset
     
 for index, row in cross_selling_sms_general.iterrows():
     l = [row["ID"],1,0,1,0,1,0,1,0,1,0,1,0]
@@ -1043,9 +1070,12 @@ for index, row in cross_selling_tls_general.iterrows():
     Cross_Selling_TLS.loc[len(Cross_Selling_TLS)] = l
 
 #SOLUTION
-for index, row in solution_dem_general.iterrows():
+# in order to respect the criterion, we have to take into consideration if the consumer was contactable for both campaigns (solution and cross-selling), if he was “email validated” and, finally, if he was “phone validated”. 
+# we repeat what we did before, adjusting the strategy for each of the possible combinations of the factors just mentioned
+
+for index, row in solution_dem_general.iterrows(): 
     if (row["PHONE_VALIDATED"] == "KO") & (row["PREDICTION_DUAL"] != 1):
-        l = [row["ID"],0,1,0,1,0,0,0,0,0,0,0,0]
+        l = [row["ID"],0,1,0,1,0,0,0,0,0,0,0,0]  
         Solution_DEM.loc[len(Solution_DEM)] = l
     elif (row["PHONE_VALIDATED"] == "KO") & (row["PREDICTION_DUAL"] == 1):
         m = [row["ID"],1,0,1,0,0,0,0,0,0,0,0,0]
@@ -1073,7 +1103,7 @@ for index, row in solution_tls_general.iterrows():
         m = [row["ID"],0,1,0,0,0,0,0,0,0,0,0,0]
         Solution_TLS.loc[len(Solution_TLS)] = m
 
-
+# finally we export the six datasets as files in csv format 
 Cross_Selling_DEM.to_csv("Cross_Selling_DEM.csv")
 Cross_Selling_SMS.to_csv("Cross_Selling_SMS.csv")
 Cross_Selling_TLS.to_csv("Cross_Selling_TLS.csv")
