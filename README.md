@@ -1,5 +1,3 @@
-# Data-Driven-Contact-Strategy
- 
 In the realm of Digital Marketing, personalizing sales and contacts basing on individual customers with Data Driven strategies is becoming increasingly important. It is essential to identify the target to address a specific product/offer through the most suitable channel. Advanced Analytics algorithms can support rules-based tools in making the personalization of marketing/caring campaigns more accurate.
 
 The present work analyzes data of a company that deals with the sale of electricity, gas, and high energy efficiency solution (boilers, air conditioners, photovoltaics).
@@ -13,7 +11,7 @@ Therefore, the monthly contact strategy will take the form of 6 csv files, each 
 • ID: The customer’s ID;
 
 • Month 1, Month 2,...Month 12: they will take the value 0 if the customer will not be contacted
-for the campaign with that channel and 1 otherwise.
+  for the campaign with that channel and 1 otherwise.
 
 To fully achieve the desired result, there were two models to be implemented: a propensity model, to estimate the likelihood of customers’ positive responses to a specific campaign, and an eligibility model, to analyze the customers’ contactability.
 
